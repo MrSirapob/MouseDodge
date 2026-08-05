@@ -202,7 +202,6 @@
   <div class="chip best"><span class="icon">🏆</span><span class="val"><span id="best">0.0</span>s · W<span id="bestWave">0</span></span></div>
   <div class="chip graze"><span class="icon">✦</span><span class="val"><span id="graze">0</span></span></div>
   <div class="chip dash" id="dashChip"><span class="icon">⚡</span><span class="val" id="dashVal">READY</span></div>
-  <div class="chip"><span class="icon">❤️</span><span class="val" id="lives">3</span></div>
   <div class="chip combo" id="comboChip" style="display:none;"><span class="icon">🔥</span><span class="val" id="comboVal">x1.0</span></div>
 </div>
 
@@ -335,8 +334,6 @@ const DASH_INVULN_TIME = 0.18;
 const DASH_DISTANCE = 130;
 let dashCooldown = 0;
 let dashInvuln = 0;
-let lives = 3;
-let hitInvuln = 0;
 
 // combo (graze streak)
 const COMBO_WINDOW = 1.1;
@@ -696,9 +693,6 @@ function resetGame() {
   comboTimer = 0;
   dashCooldown = 0;
   dashInvuln = 0;
-  lives = 3;
-  hitInvuln = 0;
-  document.getElementById('lives').textContent=lives;
   player.x = mouseX; player.y = mouseY;
   waveDuration = 10;
   boss.active = false;
@@ -763,28 +757,11 @@ window.addEventListener('keydown', e => {
 });
 
 // ---------- UPDATE ----------
-
-function takeDamage(color='#ff5c5c'){
-  if(hitInvuln>0 || dashInvuln>0) return false;
-  lives--;
-  document.getElementById('lives').textContent=lives;
-  spawnParticles(player.x,player.y,color,28);
-  if(lives<=0){
-    gameOver();
-    return true;
-  }
-  hitInvuln=2.0;
-  triggerShake(10);
-  flashAlpha=1;
-  return false;
-}
-
 function update(rawDt) {
   if (slowMoRemaining > 0) slowMoRemaining -= rawDt;
   const timeScale = slowMoRemaining > 0 ? 0.32 : 1;
   const dt = rawDt * timeScale;
 
-  if(hitInvuln>0) hitInvuln=Math.max(0,hitInvuln-rawDt);
   dashCooldown = Math.max(0, dashCooldown - rawDt);
   if (dashInvuln > 0) dashInvuln = Math.max(0, dashInvuln - rawDt);
   if (comboTimer > 0) { comboTimer -= rawDt; if (comboTimer <= 0) { comboTimer = 0; combo = 0; } }
@@ -830,7 +807,7 @@ function update(rawDt) {
     zone.curR = lerp(zone.startR, zone.minR, t);
     if (zone.t > zone.grace) {
       const d = Math.hypot(player.x - zone.cx, player.y - zone.cy);
-      if (d > zone.curR) { if(takeDamage('#ff5c5c')) return; }
+      if (d > zone.curR) { spawnParticles(player.x, player.y, '#ff5c5c', 28); gameOver(); return; }
     }
   }
 
@@ -844,7 +821,7 @@ function update(rawDt) {
         const hit = L.orientation === 'h'
           ? Math.abs(player.y - L.pos) < L.thickness / 2 + player.r
           : Math.abs(player.x - L.pos) < L.thickness / 2 + player.r;
-        if (hit) { if(takeDamage(L.color)) return; }
+        if (hit) { spawnParticles(player.x, player.y, L.color, 28); gameOver(); return; }
       }
       if (L.t >= L.fireDur) lasers.splice(i, 1);
     }
@@ -889,8 +866,9 @@ function update(rawDt) {
       const dist = Math.hypot(dx, dy);
       const collideR = b.r + player.r;
       if (dist < collideR) {
-        if(takeDamage('#ff5c5c')) return;
-        continue;
+        spawnParticles(player.x, player.y, '#ff5c5c', 28);
+        gameOver();
+        return;
       } else if (!b.grazed && dist < collideR + 16) {
         b.grazed = true;
         grazeCount++;
@@ -1076,7 +1054,6 @@ function draw() {
   }
 
   // player
-  if(hitInvuln>0 && Math.floor(hitInvuln*10)%2===0){ctx.globalAlpha=0.35;}
   if (dashInvuln > 0) {
     ctx.beginPath();
     ctx.arc(player.x, player.y, player.r + 8, 0, Math.PI * 2);
@@ -1094,7 +1071,6 @@ function draw() {
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#fff';
   ctx.stroke();
-  ctx.globalAlpha=1;
 
   ctx.restore();
 
