@@ -1674,7 +1674,7 @@
             ctx.restore();
           }
         }
-        
+
         // ----- Player -----
         ctx.save();
 
@@ -1835,18 +1835,6 @@
           d.className = 'life';
           d.innerHTML = '❤️';
           el.appendChild(d);
-        }
-      }
-
-      function buildSegUI() {
-        const el = document.getElementById('boss-segs');
-        el.innerHTML = '';
-        for (let i = 0; i < 5; i++) {
-          const seg = document.createElement('div');
-          seg.className = 'boss-seg';
-          const i2 = document.createElement('i');
-          seg.appendChild(i2);
-          el.appendChild(seg);
         }
       }
 
