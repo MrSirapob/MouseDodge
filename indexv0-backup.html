@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MOUSE DODGE — Vertical Slice</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Chakra+Petch:wght@500;600;700&display=swap');
+
+:root{
+  --bg:#05060a;
+  --grid: rgba(140,170,255,0.05);
+  --accent:#6fd8ff;
+  --accent2:#9b8cff;
+  --danger:#ff4d5e;
+  --warn:#ffb454;
+  --text:#e7ecf6;
+  --muted:#7a8296;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Sarabun',sans-serif;height:100%;width:100%;-webkit-user-select:none;user-select:none;}
+canvas{display:block;position:fixed;inset:0;cursor:none;}
+
+/* ---------- full screen overlays ---------- */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px;z-index:30;text-align:center;
+  background:radial-gradient(ellipse at 50% 40%, rgba(18,20,32,.88), rgba(3,4,8,.98));
+}
+.screen.active{display:flex;}
+
+.logo{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:58px;letter-spacing:14px;
+  color:#f2f6ff;margin:0;text-shadow:0 0 40px rgba(155,140,255,.55), 0 0 90px rgba(111,216,255,.25);}
+.logo span{color:var(--accent);}
+.subtitle{color:var(--muted);letter-spacing:3px;font-size:14px;margin-top:-14px;font-weight:300;}
+
+.btn-col{display:flex;flex-direction:column;gap:14px;margin-top:12px;min-width:260px;}
+button.btn{background:transparent;border:1px solid rgba(255,255,255,.22);color:var(--text);
+  padding:15px 20px;font-size:15px;letter-spacing:5px;font-family:'Sarabun',sans-serif;font-weight:600;
+  cursor:pointer;transition:.22s ease;border-radius:2px;}
+button.btn:hover{border-color:var(--accent);color:#fff;box-shadow:0 0 24px rgba(111,216,255,.3);
+  background:rgba(111,216,255,.06);}
+button.btn.ghost{border-color:rgba(255,255,255,.1);color:var(--muted);letter-spacing:4px;font-weight:400;font-size:13px;}
+button.btn.ghost:hover{color:var(--text);border-color:rgba(255,255,255,.3);box-shadow:none;background:rgba(255,255,255,.03);}
+button.btn.danger:hover{border-color:var(--danger);box-shadow:0 0 24px rgba(255,77,94,.3);}
+button.btn.gold:hover{border-color:var(--warn);box-shadow:0 0 24px rgba(255,180,84,.35);}
+
+.controls-list{display:flex;flex-direction:column;gap:16px;margin:6px 0 8px;}
+.control-row{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:14px;letter-spacing:.5px;}
+.key{border:1px solid rgba(255,255,255,.3);padding:7px 16px;border-radius:4px;color:#fff;font-size:12px;
+  letter-spacing:1.5px;min-width:78px;text-align:center;font-family:'Chakra Petch',sans-serif;}
+
+.eyebrow{font-size:11px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;}
+.result-sub{color:var(--muted);font-size:14px;letter-spacing:1px;margin-top:-10px;}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:15;display:none;}
+#hud.active{display:block;}
+
+#boss-bar-wrap{position:absolute;top:28px;left:50%;transform:translateX(-50%);display:flex;gap:5px;
+  flex-direction:column;align-items:center;}
+#boss-name{font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:6px;color:rgba(230,236,255,.55);
+  margin-bottom:7px;}
+#boss-segs{display:flex;gap:5px;}
+.boss-seg{width:56px;height:5px;background:rgba(255,255,255,.08);position:relative;overflow:hidden;border-radius:1px;}
+.boss-seg i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--accent2),var(--accent));
+  width:100%;transform-origin:left;box-shadow:0 0 8px rgba(111,216,255,.6);}
+
+#lives{position:absolute;bottom:28px;left:32px;display:flex;gap:9px;}
+.life{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle,#bfe9ff,#5aa9d6 60%,#1c4a63);
+  box-shadow:0 0 9px rgba(111,216,255,.8);transition:.25s;}
+.life.lost{background:rgba(255,255,255,.06);box-shadow:none;}
+
+#skill{position:absolute;bottom:20px;right:32px;width:56px;height:56px;pointer-events:none;}
+#skill-ring{width:100%;height:100%;border-radius:50%;border:2px solid rgba(255,255,255,.22);position:relative;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#skill-fill{position:absolute;inset:0;background:conic-gradient(rgba(10,12,20,.88) 0deg, rgba(10,12,20,.88) 0deg, transparent 0deg);}
+#skill-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);z-index:2;}
+#skill.ready #skill-dot{background:#fff;box-shadow:0 0 14px var(--accent),0 0 26px var(--accent);}
+
+#pause-btn{position:absolute;top:26px;right:32px;width:26px;height:26px;pointer-events:auto;cursor:pointer;
+  opacity:.45;transition:.2s;}
+#pause-btn:hover{opacity:.9;}
+
+#flash{position:fixed;inset:0;background:var(--danger);opacity:0;pointer-events:none;z-index:25;}
+#slowmo-veil{position:fixed;inset:0;pointer-events:none;z-index:8;opacity:0;transition:opacity .25s;
+  background:radial-gradient(circle at 50% 55%, transparent 38%, rgba(70,120,255,.14) 100%);
+  box-shadow:inset 0 0 140px rgba(70,110,255,.25);}
+
+#phase-title{position:fixed;top:44%;left:50%;transform:translate(-50%,-50%);z-index:12;pointer-events:none;
+  font-family:'Chakra Petch',sans-serif;letter-spacing:10px;font-size:26px;color:#fff;opacity:0;text-align:center;
+  text-shadow:0 0 30px rgba(155,140,255,.7);}
+
+@media (max-width:640px){
+  .logo{font-size:38px;letter-spacing:8px;}
+  .subtitle{font-size:12px;}
+  #boss-seg,.boss-seg{width:38px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+<div id="flash"></div>
+<div id="slowmo-veil"></div>
+<div id="phase-title"></div>
+
+<!-- MENU -->
+<div class="screen active" id="screen-menu">
+  <div class="eyebrow">MOUSE BULLET HELL — VERTICAL SLICE</div>
+  <div class="eyebrow" style="font-size: 12px;">เป็นเพียง Version ทดลอง Bossfight เท่านั้น</div>
+  <h1 class="logo">MOUSE<span>DODGE</span></h1>
+  <div class="subtitle">ศึกบอสตัวแรก — บททดสอบเดียวที่ต้องเอาชนะให้ได้</div>
+  <div class="btn-col">
+    <button class="btn" id="btn-start">เริ่มเกม</button>
+    <button class="btn ghost" id="btn-howto">วิธีเล่น</button>
+  </div>
+</div>
+
+<!-- HOW TO PLAY -->
+<div class="screen" id="screen-howto">
+  <div class="eyebrow">การควบคุม</div>
+  <div class="controls-list">
+    <div class="control-row"><span class="key">เมาส์</span><span>ขยับตำแหน่ง</span></div>
+    <div class="control-row"><span class="key">คลิกซ้าย</span><span>สกิล — ชะลอเวลา</span></div>
+    <div class="control-row"><span class="key">SPACE</span><span>หยุดชั่วคราว</span></div>
+  </div>
+  <div class="btn-col">
+    <button class="btn ghost" id="btn-howto-back">ย้อนกลับ</button>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div class="screen" id="screen-pause">
+  <div class="eyebrow">พักสายตาสักครู่</div>
+  <h1 class="logo" style="font-size:34px;letter-spacing:8px;">หยุดชั่วคราว</h1>
+  <div class="btn-col">
+    <button class="btn" id="btn-resume">เล่นต่อ</button>
+    <button class="btn ghost" id="btn-pause-menu">กลับเมนูหลัก</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="screen-gameover">
+  <div class="eyebrow">พลาดท่า</div>
+  <h1 class="logo" style="font-size:44px;color:#ffb9c0;text-shadow:0 0 40px rgba(255,77,94,.5);">พ่ายแพ้</h1>
+  <h1 class="logo" style="font-size:44px;color:#ffb9c0;text-shadow:0 0 40px rgba(255,77,94,.5);">ง่ายเกิน GGEZ</h1>
+  <div class="result-sub" id="gameover-sub">ไปได้ถึงเฟส 1</div>
+  <div class="btn-col">
+    <button class="btn danger" id="btn-retry">ลองอีกครั้ง</button>
+    <button class="btn ghost" id="btn-gameover-menu">กลับเมนูหลัก</button>
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div class="screen" id="screen-victory">
+  <div class="eyebrow">ผู้รอดชีวิต</div>
+  <h1 class="logo" style="font-size:44px;color:#fff3c4;text-shadow:0 0 50px rgba(255,200,90,.55);">ชัยชนะ</h1>
+  <div class="result-sub">เจ้าเอาชนะบอสตัวแรกได้แล้ว — ชัยชนะนี้เจ้าเป็นผู้ไขว่คว้ามันมาเอง</div>
+  <div class="btn-col">
+    <button class="btn gold" id="btn-victory-again">เล่นอีกครั้ง</button>
+    <button class="btn ghost" id="btn-victory-menu">กลับเมนูหลัก</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="boss-bar-wrap">
+    <div id="boss-name">EYE OF THE HOLLOW</div>
+    <div id="boss-segs"></div>
+  </div>
+  <div id="lives"></div>
+  <div id="skill"><div id="skill-ring"><div id="skill-fill"></div><div id="skill-dot"></div></div></div>
+  <svg id="pause-btn" viewBox="0 0 24 24" fill="none">
+    <rect x="6" y="4" width="4" height="16" rx="1" fill="white"/>
+    <rect x="14" y="4" width="4" height="16" rx="1" fill="white"/>
+  </svg>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   SETUP
+============================================================ */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W=0,H=0, DPR=Math.min(window.devicePixelRatio||1,2);
+let arena = {left:0,top:0,right:0,bottom:0};
+let vignetteGrad = null;
+
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W*DPR; canvas.height = H*DPR;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  arena.left = 26; arena.right = W-26;
+  arena.top = 96; arena.bottom = H-26;
+  boss.homeX = W/2;
+  vignetteGrad = ctx.createRadialGradient(W/2,H*0.55,H*0.15,W/2,H*0.55,H*0.75);
+  vignetteGrad.addColorStop(0,'rgba(0,0,0,0)');
+  vignetteGrad.addColorStop(1,'rgba(0,0,0,0.55)');
+}
+window.addEventListener('resize', resize);
+
+/* ============================================================
+   STATE MACHINE
+============================================================ */
+const SCREENS = ['menu','howto','pause','gameover','victory'];
+let appState = 'menu'; // menu | howto | playing | paused | gameover | victory
+let prevPlayState = 'menu';
+
+function showScreen(id){
+  SCREENS.forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('active', s===id);
+  });
+  document.getElementById('hud').classList.remove('active');
+}
+function showHud(){
+  SCREENS.forEach(s=>document.getElementById('screen-'+s).classList.remove('active'));
+  document.getElementById('hud').classList.add('active');
+}
+
+/* ============================================================
+   INPUT
+============================================================ */
+const mouse = {x:innerWidth/2, y:innerHeight*0.7};
+canvas.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+canvas.addEventListener('touchmove', e=>{
+  if(e.touches[0]){ mouse.x=e.touches[0].clientX; mouse.y=e.touches[0].clientY; }
+  e.preventDefault();
+}, {passive:false});
+
+window.addEventListener('mousedown', e=>{
+  if(e.button!==0) return;
+  if(appState==='playing') tryActivateSkill();
+});
+window.addEventListener('touchstart', e=>{
+  if(appState==='playing') tryActivateSkill();
+});
+
+window.addEventListener('keydown', e=>{
+  if(e.code==='Space'){
+    e.preventDefault();
+    if(appState==='playing') pauseGame();
+    else if(appState==='paused') resumeGame();
+  }
+});
+
+document.getElementById('pause-btn').addEventListener('click', ()=>{
+  if(appState==='playing') pauseGame();
+});
+
+/* ============================================================
+   MENU WIRING
+============================================================ */
+document.getElementById('btn-start').onclick = ()=> startGame();
+document.getElementById('btn-howto').onclick = ()=>{ appState='howto'; showScreen('howto'); };
+document.getElementById('btn-howto-back').onclick = ()=>{ appState='menu'; showScreen('menu'); };
+document.getElementById('btn-resume').onclick = ()=> resumeGame();
+document.getElementById('btn-pause-menu').onclick = ()=>{ appState='menu'; showScreen('menu'); };
+document.getElementById('btn-retry').onclick = ()=> startGame();
+document.getElementById('btn-gameover-menu').onclick = ()=>{ appState='menu'; showScreen('menu'); };
+document.getElementById('btn-victory-again').onclick = ()=> startGame();
+document.getElementById('btn-victory-menu').onclick = ()=>{ appState='menu'; showScreen('menu'); };
+
+function pauseGame(){ prevPlayState='playing'; appState='paused'; showScreen('pause'); }
+function resumeGame(){ appState='playing'; showHud(); }
+
+/* ============================================================
+   GLOBAL GAME VARIABLES
+============================================================ */
+let bullets = [];
+let lasers = [];
+let particles = [];
+let trail = [];
+let shakeMag = 0, shakeTime = 0, shakeTotal = 0;
+let furthestPhase = 1;
+let lastTime = 0;
+
+const SLOWMO_SCALE = 0.32;
+const SLOWMO_DURATION = 1750;
+const SKILL_COOLDOWN = 8200;
+const GRAZE_RADIUS = 24;
+const GRAZE_REFUND = 260;
+
+const player = {
+  x:0, y:0, r:9, hitR:4,
+  lives:3, invuln:false, invulnTimer:0,
+  skillCooldown:0, skillActive:false, skillTimer:0
+};
+
+const boss = {
+  x:0, y:0, homeX:0, homeY:150,
+  r:64, bob:0,
+  phaseIndex:0, cycle:0, beatIndex:0,
+  state:'TELEGRAPH', timer:0, currentBeat:null,
+  eyeColor:'#8f7bff', eyeGlow:'#8f7bff',
+  dashTargetX:null, dashFrom:0, dashProgress:1,
+  pupilX:0, pupilY:0
+};
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function dist(x1,y1,x2,y2){ return Math.hypot(x2-x1,y2-y1); }
+function angleTo(x1,y1,x2,y2){ return Math.atan2(y2-y1,x2-x1); }
+function rand(a,b){ return a+Math.random()*(b-a); }
+function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+function easeInOutQuad(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+
+function shake(mag, dur){ shakeMag=mag; shakeTime=dur; shakeTotal=dur; }
+
+function spawnParticles(x,y,color,count,speedRange,lifeRange,sizeRange){
+  for(let i=0;i<count;i++){
+    const a = rand(0,Math.PI*2);
+    const sp = rand(speedRange[0],speedRange[1]);
+    particles.push({
+      x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+      life:0, maxLife:rand(lifeRange[0],lifeRange[1]),
+      size:rand(sizeRange[0],sizeRange[1]), color
+    });
+  }
+}
+
+/* ============================================================
+   BULLETS
+============================================================ */
+function spawnBullet(o){
+  bullets.push({
+    x:o.x, y:o.y, vx:o.vx, vy:o.vy, r:o.r||6,
+    color:o.color||'#ff8a6a', glow:o.glow||o.color||'#ff8a6a',
+    type:o.type||'normal',
+    turnRate:o.turnRate||0, speed:o.speed||Math.hypot(o.vx,o.vy),
+    life:0, maxLife:o.maxLife||6000, grazed:false
+  });
+}
+
+function updateBullets(dtS){
+  for(let i=bullets.length-1;i>=0;i--){
+    const b = bullets[i];
+    b.life += dtS;
+    if(b.type==='homing'){
+      const desired = angleTo(b.x,b.y,player.x,player.y);
+      const cur = Math.atan2(b.vy,b.vx);
+      let diff = desired-cur;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      const maxTurn = b.turnRate*(dtS/16.6667);
+      const na = cur + clamp(diff,-maxTurn,maxTurn);
+      b.vx = Math.cos(na)*b.speed; b.vy = Math.sin(na)*b.speed;
+    }
+    b.x += b.vx*(dtS/16.6667);
+    b.y += b.vy*(dtS/16.6667);
+
+    const outOfBounds = b.x < arena.left-60 || b.x > arena.right+60 || b.y < arena.top-60 || b.y > arena.bottom+80;
+    if(outOfBounds || b.life>b.maxLife){ bullets.splice(i,1); continue; }
+
+    if(!player.invuln && appState==='playing'){
+      const d = dist(b.x,b.y,player.x,player.y);
+      if(d < b.r+player.hitR){ hitPlayer(); bullets.splice(i,1); continue; }
+      if(!b.grazed && d < b.r+GRAZE_RADIUS){
+        b.grazed = true;
+        player.skillCooldown = Math.max(0, player.skillCooldown-GRAZE_REFUND);
+        spawnParticles(b.x,b.y,'#bfe9ff',3,[0.4,1.2],[220,380],[1,2.5]);
+      }
+    }
+  }
+}
+
+function drawBullets(){
+  for(const b of bullets){
+    ctx.save();
+    ctx.shadowBlur = 14; ctx.shadowColor = b.glow;
+    ctx.fillStyle = b.color;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(b.x-b.r*0.28,b.y-b.r*0.28,b.r*0.32,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ============================================================
+   LASERS
+============================================================ */
+function spawnLaser(o){
+  lasers.push({
+    ox:o.ox, oy:o.oy, angleStart:o.angleStart, angleEnd:o.angleEnd,
+    width:o.width||16, sweepDuration:o.sweepDuration, elapsed:0,
+    active:true, hitCooldown:0
+  });
+}
+function updateLasers(dtS){
+  for(let i=lasers.length-1;i>=0;i--){
+    const l = lasers[i];
+    l.elapsed += dtS;
+    const t = clamp(l.elapsed/l.sweepDuration,0,1);
+    const curAngle = lerp(l.angleStart,l.angleEnd,easeInOutQuad(t));
+    l.curAngle = curAngle;
+    if(!player.invuln && appState==='playing'){
+      const px = player.x-l.ox, py = player.y-l.oy;
+      const dirx = Math.cos(curAngle), diry = Math.sin(curAngle);
+      const proj = px*dirx + py*diry;
+      if(proj>0){
+        const closestX = l.ox+dirx*proj, closestY = l.oy+diry*proj;
+        const d = dist(player.x,player.y,closestX,closestY);
+        if(d < l.width/2+player.hitR) hitPlayer();
+      }
+    }
+    if(t>=1) lasers.splice(i,1);
+  }
+}
+function drawLasers(){
+  for(const l of lasers){
+    const len = 1400;
+    const ex = l.ox+Math.cos(l.curAngle)*len, ey = l.oy+Math.sin(l.curAngle)*len;
+    const grad = ctx.createLinearGradient(l.ox,l.oy,ex,ey);
+    grad.addColorStop(0,'rgba(255,90,110,0.95)');
+    grad.addColorStop(0.06,'rgba(255,120,130,0.9)');
+    grad.addColorStop(1,'rgba(255,60,80,0)');
+    ctx.save();
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = l.width;
+    ctx.lineCap='round';
+    ctx.shadowBlur = 22; ctx.shadowColor='#ff4d5e';
+    ctx.beginPath(); ctx.moveTo(l.ox,l.oy); ctx.lineTo(ex,ey); ctx.stroke();
+    ctx.lineWidth = l.width*0.32;
+    ctx.strokeStyle='rgba(255,235,235,0.9)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(l.ox,l.oy); ctx.lineTo(ex,ey); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ============================================================
+   PARTICLES
+============================================================ */
+function updateParticles(dtS){
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.life += dtS;
+    if(p.life>p.maxLife){ particles.splice(i,1); continue; }
+    p.x += p.vx*(dtS/16.6667); p.y += p.vy*(dtS/16.6667);
+    p.vx *= 0.965; p.vy *= 0.965;
+  }
+}
+function drawParticles(){
+  for(const p of particles){
+    const t = 1-p.life/p.maxLife;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0,t);
+    ctx.fillStyle = p.color;
+    ctx.shadowBlur = 10; ctx.shadowColor = p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*t+0.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ============================================================
+   ATTACK BEAT FACTORY
+============================================================ */
+function beatRingBurst(o){
+  const rings = o.rings||1, count=o.count||18, speed=o.speed||2.2, ringGap=o.ringGap||260;
+  return {
+    telegraph:o.telegraph||950, attackDuration:(rings-1)*ringGap+260, recovery:o.recovery||800,
+    telegraphKind:'burst', data:{},
+    prep(){},
+    onAttackStart(bs){ fireRing(bs,count,speed,0); },
+    onAttackTick(elapsed,dtS,bs){
+      for(let r=1;r<rings;r++){
+        const t = r*ringGap;
+        if(!this._fired) this._fired={};
+        if(elapsed>=t && !this._fired[r]){ this._fired[r]=true; fireRing(bs,count,speed+r*0.35,r*0.35); }
+      }
+    },
+    drawTelegraph(c,bs,p){
+      const rad = 20+p*70;
+      c.save(); c.globalAlpha = 0.35*p; c.strokeStyle='#ffb454'; c.lineWidth=2.5;
+      c.shadowBlur=14; c.shadowColor='#ffb454';
+      c.beginPath(); c.arc(bs.x,bs.y,rad,0,Math.PI*2); c.stroke(); c.restore();
+    }
+  };
+}
+function fireRing(bs,count,speed,rotOffset){
+  const off = rand(0,Math.PI*2);
+  for(let i=0;i<count;i++){
+    const a = off+rotOffset+ (Math.PI*2/count)*i;
+    spawnBullet({x:bs.x,y:bs.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6,color:'#ff8a6a',glow:'#ff8a6a'});
+  }
+}
+
+function beatAimedVolley(o){
+  const count=o.count||3, spacing=o.spacingMs||200, speed=o.speed||4.2;
+  return {
+    telegraph:o.telegraph||750, attackDuration:count*spacing+80, recovery:o.recovery||800,
+    telegraphKind:'aim', data:{},
+    prep(bs,pl){ this.data.angle = angleTo(bs.x,bs.y,pl.x,pl.y); },
+    onAttackStart(){ this._fired=0; this._acc=0; },
+    onAttackTick(elapsed,dtS,bs,pl){
+      if(this._fired===undefined) this._fired=0;
+      while(this._fired<count && elapsed>=this._fired*spacing){
+        const a = angleTo(bs.x,bs.y,pl.x,pl.y);
+        spawnBullet({x:bs.x,y:bs.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6.5,color:'#ff5f7a',glow:'#ff5f7a'});
+        this._fired++;
+      }
+    },
+    drawTelegraph(c,bs,p){
+      const a = this.data.angle;
+      c.save(); c.globalAlpha=0.32*p; c.strokeStyle='#ff5f7a'; c.lineWidth=2;
+      c.setLineDash([6,10]); c.shadowBlur=10; c.shadowColor='#ff5f7a';
+      c.beginPath(); c.moveTo(bs.x,bs.y); c.lineTo(bs.x+Math.cos(a)*900,bs.y+Math.sin(a)*900); c.stroke();
+      c.restore();
+    }
+  };
+}
+
+function beatSpiralStream(o){
+  const dur=o.duration||2600, rate=o.rate||110, speed=o.speed||2.4, rot=o.rotSpeed||0.05, arms=o.arms||2;
+  return {
+    telegraph:o.telegraph||700, attackDuration:dur, recovery:o.recovery||750,
+    telegraphKind:'spiral', data:{},
+    prep(){ this._ang = rand(0,Math.PI*2); this._acc=0; },
+    onAttackStart(){ this._acc=0; },
+    onAttackTick(elapsed,dtS,bs){
+      this._ang += rot*(dtS/16.6667);
+      this._acc += dtS;
+      while(this._acc>=rate){
+        this._acc-=rate;
+        for(let i=0;i<arms;i++){
+          const a = this._ang + (Math.PI*2/arms)*i;
+          spawnBullet({x:bs.x,y:bs.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:5.5,color:'#c39dff',glow:'#c39dff'});
+        }
+      }
+    },
+    drawTelegraph(c,bs,p){
+      c.save(); c.globalAlpha=0.3*p; c.strokeStyle='#c39dff'; c.lineWidth=2;
+      c.shadowBlur=12; c.shadowColor='#c39dff';
+      c.beginPath(); c.arc(bs.x,bs.y,18+p*30,0,Math.PI*2); c.stroke(); c.restore();
+    }
+  };
+}
+
+function beatLaserSweep(o){
+  const arcSpan=o.arcSpan||2.6, sweepDuration=o.sweepDuration||1000, width=o.width||16;
+  const dir = o.reverse ? -1 : 1;
+  return {
+    telegraph:o.telegraph||1300, attackDuration:sweepDuration, recovery:o.recovery||850,
+    telegraphKind:'laser', data:{},
+    prep(bs,pl){
+      const aim = angleTo(bs.x,bs.y,pl.x,pl.y);
+      this.data.angleStart = aim - (arcSpan/2)*dir;
+      this.data.angleEnd = aim + (arcSpan/2)*dir;
+    },
+    onAttackStart(bs){
+      spawnLaser({ox:bs.x,oy:bs.y,angleStart:this.data.angleStart,angleEnd:this.data.angleEnd,width,sweepDuration});
+    },
+    onAttackTick(){},
+    drawTelegraph(c,bs,p){
+      c.save(); c.globalAlpha=0.22*p;
+      c.fillStyle='#ff4d5e';
+      c.beginPath(); c.moveTo(bs.x,bs.y);
+      c.arc(bs.x,bs.y,900,this.data.angleStart,this.data.angleEnd, this.data.angleEnd<this.data.angleStart);
+      c.closePath(); c.fill(); c.restore();
+    }
+  };
+}
+
+function beatHomingOrbs(o){
+  const count=o.count||4, speed=o.speed||1.7, turnRate=o.turnRate||0.03;
+  return {
+    telegraph:o.telegraph||800, attackDuration:200, recovery:o.recovery||800,
+    telegraphKind:'homing', data:{},
+    prep(){},
+    onAttackStart(bs){
+      for(let i=0;i<count;i++){
+        const a = rand(0,Math.PI*2);
+        spawnBullet({x:bs.x,y:bs.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6,
+          color:'#ff9dd6',glow:'#ff9dd6',type:'homing',turnRate,speed,maxLife:5200});
+      }
+    },
+    onAttackTick(){},
+    drawTelegraph(c,bs,p){
+      c.save(); c.globalAlpha=0.4*p; c.fillStyle='#ff9dd6'; c.shadowBlur=14; c.shadowColor='#ff9dd6';
+      for(let i=0;i<6;i++){
+        const a = (Math.PI*2/6)*i + p*2;
+        c.beginPath(); c.arc(bs.x+Math.cos(a)*(bs.r+14),bs.y+Math.sin(a)*(bs.r+14),3,0,Math.PI*2); c.fill();
+      }
+      c.restore();
+    }
+  };
+}
+
+function beatBulletWall(o){
+  const gapWidth=o.gapWidth||100, gapCount=o.gapCount||1, speed=o.speed||2.2, rows=o.rows||1, rowGap=o.rowGap||500;
+  return {
+    telegraph:o.telegraph||950, attackDuration:(rows-1)*rowGap+200, recovery:o.recovery||800,
+    telegraphKind:'wall', data:{gaps:[]},
+    prep(){
+      this.data.gaps = [];
+      for(let i=0;i<gapCount;i++) this.data.gaps.push(rand(arena.left+60,arena.right-60));
+    },
+    onAttackStart(){ this._rowsFired=0; },
+    onAttackTick(elapsed,dtS,bs){
+      if(this._rowsFired===undefined) this._rowsFired=0;
+      while(this._rowsFired<rows && elapsed>=this._rowsFired*rowGap){
+        fireWallRow(this.data.gaps, gapWidth, speed, this._rowsFired%2===1);
+        this._rowsFired++;
+      }
+    },
+    drawTelegraph(c,bs,p){
+      c.save();
+      const step=34;
+      for(let x=arena.left;x<arena.right;x+=step){
+        const inGap = this.data.gaps.some(g=>Math.abs(x-g)<gapWidth/2);
+        if(!inGap){
+          c.globalAlpha=0.22*p; c.fillStyle='#ffb454';
+          c.fillRect(x, arena.top, step-4, 26);
+        }
+      }
+      c.restore();
+    }
+  };
+}
+function fireWallRow(gaps, gapWidth, speed, shift){
+  const step=30;
+  for(let x=arena.left; x<arena.right; x+=step){
+    const inGap = gaps.some(g=>Math.abs(x-g)<gapWidth/2);
+    if(inGap) continue;
+    spawnBullet({x:x+(shift?step/2:0), y:arena.top-10, vx:0, vy:speed, r:6, color:'#ffb454', glow:'#ffb454'});
+  }
+}
+
+function combine(subBeats, overrides){
+  overrides = overrides||{};
+  return {
+    telegraph: overrides.telegraph!==undefined?overrides.telegraph:Math.max(...subBeats.map(b=>b.telegraph)),
+    attackDuration: overrides.attackDuration!==undefined?overrides.attackDuration:Math.max(...subBeats.map(b=>b.attackDuration)),
+    recovery: overrides.recovery!==undefined?overrides.recovery:Math.max(...subBeats.map(b=>b.recovery)),
+    telegraphKind:'combo',
+    prep(bs,pl){ subBeats.forEach(b=>b.prep&&b.prep(bs,pl)); },
+    onAttackStart(bs,pl){ subBeats.forEach(b=>{ b._fired=0; b._rowsFired=0; b.onAttackStart&&b.onAttackStart(bs,pl); }); },
+    onAttackTick(elapsed,dtS,bs,pl){ subBeats.forEach(b=>{ if(b.onAttackTick) b.onAttackTick(elapsed,dtS,bs,pl); }); },
+    drawTelegraph(c,bs,p){ subBeats.forEach(b=>b.drawTelegraph&&b.drawTelegraph(c,bs,p)); }
+  };
+}
+
+/* ============================================================
+   PHASE DATA
+============================================================ */
+let PHASES = [];
+function buildPhases(){
+  PHASES = [
+    { cycles:2, beats:[
+      beatRingBurst({count:16, speed:2.0, telegraph:1000, recovery:900}),
+      beatAimedVolley({count:3, spacingMs:230, speed:4.0, telegraph:800, recovery:900})
+    ]},
+    { cycles:2, beats:[
+      beatRingBurst({count:20, speed:2.2, telegraph:900, recovery:750, rings:2}),
+      beatSpiralStream({duration:2500, rate:120, speed:2.3, rotSpeed:0.05, telegraph:700, recovery:800}),
+      beatAimedVolley({count:4, spacingMs:190, speed:4.3, telegraph:700, recovery:750})
+    ]},
+    { cycles:2, beats:[
+      combine([beatSpiralStream({duration:2300, rate:140, speed:2.4, rotSpeed:0.06, telegraph:750}),
+                beatAimedVolley({count:3, spacingMs:260, speed:4.1, telegraph:750})], {recovery:900}),
+      beatLaserSweep({telegraph:1250, sweepDuration:1000, arcSpan:2.6, recovery:850}),
+      beatHomingOrbs({count:4, speed:1.8, turnRate:0.028, telegraph:800, recovery:800})
+    ]},
+    { cycles:2, beats:[
+      combine([beatLaserSweep({telegraph:1150, sweepDuration:950, arcSpan:2.8}),
+                beatRingBurst({count:18, speed:2.3, telegraph:1150, rings:1})], {recovery:900}),
+      beatBulletWall({gapWidth:110, gapCount:1, speed:2.3, telegraph:900, rows:2, rowGap:520, recovery:800}),
+      combine([beatSpiralStream({duration:2100, rate:105, speed:2.6, rotSpeed:0.07, telegraph:700}),
+                beatHomingOrbs({count:3, speed:1.9, turnRate:0.03, telegraph:700})], {recovery:850})
+    ]},
+    { cycles:2, beats:[
+      combine([beatRingBurst({count:24, speed:2.5, telegraph:900, rings:2}),
+                beatAimedVolley({count:4, spacingMs:170, speed:4.5, telegraph:900})], {recovery:800}),
+      combine([beatLaserSweep({telegraph:1050, sweepDuration:900, arcSpan:2.9}),
+                beatLaserSweep({telegraph:1050, sweepDuration:900, arcSpan:2.9, reverse:true})], {recovery:950}),
+      combine([beatBulletWall({gapWidth:95, gapCount:2, speed:2.5, telegraph:850, rows:1}),
+                beatHomingOrbs({count:4, speed:2.0, turnRate:0.032, telegraph:850})], {recovery:850}),
+      combine([beatSpiralStream({duration:2500, rate:95, speed:2.8, rotSpeed:0.08, telegraph:800}),
+                beatAimedVolley({count:5, spacingMs:150, speed:4.7, telegraph:800})], {recovery:900})
+    ]}
+  ];
+}
+
+/* ============================================================
+   BOSS SCHEDULER
+============================================================ */
+const PHASE_TRANSITION_MS = 2100;
+const DEFEAT_MS = 2000;
+let victoryPending = false;
+
+function eyeColorFor(kind){
+  switch(kind){
+    case 'burst': return '#ffb454';
+    case 'aim': return '#ff5f7a';
+    case 'spiral': return '#c39dff';
+    case 'laser': return '#ff4d5e';
+    case 'homing': return '#ff9dd6';
+    case 'wall': return '#ffb454';
+    case 'combo': return '#ff6d6d';
+    default: return '#8f7bff';
+  }
+}
+
+function enterTelegraph(){
+  boss.state='TELEGRAPH'; boss.timer=0;
+  boss.currentBeat = PHASES[boss.phaseIndex].beats[boss.beatIndex];
+  boss.currentBeat.prep && boss.currentBeat.prep(boss, player);
+  boss.eyeColor = eyeColorFor(boss.currentBeat.telegraphKind);
+}
+function enterAttack(){
+  boss.state='ATTACK'; boss.timer=0;
+  boss.currentBeat.onAttackStart && boss.currentBeat.onAttackStart(boss, player);
+}
+function enterRecovery(){
+  boss.state='RECOVERY'; boss.timer=0;
+  boss.eyeColor='#8f7bff';
+  if(boss.phaseIndex>=2){
+    boss.dashFrom = boss.x;
+    boss.dashTargetX = clamp(boss.homeX + rand(-160,160), arena.left+120, arena.right-120);
+    boss.dashProgress = 0;
+  }
+}
+function advanceBeat(){
+  boss.beatIndex++;
+  if(boss.beatIndex >= PHASES[boss.phaseIndex].beats.length){
+    boss.beatIndex = 0; boss.cycle++;
+    if(boss.cycle >= PHASES[boss.phaseIndex].cycles){
+      if(boss.phaseIndex >= PHASES.length-1){ startDefeat(); return; }
+      enterPhaseTransition(); return;
+    }
+  }
+  enterTelegraph();
+}
+function enterPhaseTransition(){
+  boss.state='PHASE_TRANSITION'; boss.timer=0;
+  boss.eyeColor='#ffffff';
+  shake(12,480);
+  showPhaseTitle('เฟส '+(boss.phaseIndex+2));
+}
+function startDefeat(){
+  boss.state='DEFEATED'; boss.timer=0;
+  shake(20,900);
+  spawnParticles(boss.x,boss.y,'#ffffff',70,[1.5,6],[600,1200],[1.5,4.5]);
+  spawnParticles(boss.x,boss.y,'#8f7bff',50,[0.5,3],[800,1400],[2,5]);
+}
+
+function updateBoss(dtS){
+  boss.bob += dtS*0.0022;
+  boss.homeY = arena.top + 92;
+  let targetX = boss.homeX;
+  if(boss.dashTargetX!==null && boss.dashProgress<1){
+    boss.dashProgress = clamp(boss.dashProgress + dtS/650, 0, 1);
+    targetX = lerp(boss.dashFrom, boss.dashTargetX, easeInOutQuad(boss.dashProgress));
+    boss.homeX = boss.dashTargetX;
+  } else {
+    targetX = boss.homeX;
+  }
+  boss.x = lerp(boss.x||targetX, targetX, 0.12);
+  boss.y = boss.homeY + Math.sin(boss.bob)*7;
+
+  const pdx = player.x-boss.x, pdy = player.y-boss.y;
+  const plen = Math.hypot(pdx,pdy)||1;
+  boss.pupilX = (pdx/plen)*9; boss.pupilY = (pdy/plen)*9;
+
+  if(boss.state==='DEFEATED'){
+    boss.timer += dtS;
+    if(boss.timer>=DEFEAT_MS && !victoryPending){
+      victoryPending = true;
+      appState='victory'; showScreen('victory');
+    }
+    return;
+  }
+
+  boss.timer += dtS;
+  switch(boss.state){
+    case 'TELEGRAPH':
+      if(boss.timer>=boss.currentBeat.telegraph) enterAttack();
+      break;
+    case 'ATTACK':
+      boss.currentBeat.onAttackTick && boss.currentBeat.onAttackTick(boss.timer, dtS, boss, player);
+      if(boss.timer>=boss.currentBeat.attackDuration) enterRecovery();
+      break;
+    case 'RECOVERY':
+      if(boss.timer>=boss.currentBeat.recovery) advanceBeat();
+      break;
+    case 'PHASE_TRANSITION':
+      if(boss.timer>=PHASE_TRANSITION_MS){
+        boss.phaseIndex++; boss.cycle=0; boss.beatIndex=0;
+        furthestPhase = Math.max(furthestPhase, boss.phaseIndex+1);
+        enterTelegraph();
+      }
+      break;
+  }
+}
+
+function bossProgress(){
+  // 0..1 overall
+  const phaseFrac = boss.state==='PHASE_TRANSITION' ? 1 :
+    (boss.cycle + (boss.beatIndex/(PHASES[boss.phaseIndex].beats.length))) / PHASES[boss.phaseIndex].cycles;
+  return {phaseIndex:boss.phaseIndex, phaseFrac:clamp(phaseFrac,0,1)};
+}
+
+/* ============================================================
+   BOSS RENDER
+============================================================ */
+function drawBoss(){
+  const r = boss.r;
+  ctx.save();
+  ctx.translate(boss.x, boss.y);
+
+  // outer glow ring
+  ctx.save();
+  ctx.globalAlpha=0.5;
+  ctx.strokeStyle = boss.eyeColor; ctx.lineWidth=2;
+  ctx.shadowBlur=30; ctx.shadowColor=boss.eyeColor;
+  ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // iris body
+  const g = ctx.createRadialGradient(-r*0.25,-r*0.25,4,0,0,r);
+  g.addColorStop(0, shadeColor(boss.eyeColor, 40));
+  g.addColorStop(0.55, boss.eyeColor);
+  g.addColorStop(1, '#1a1330');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+
+  // recovery eyelids
+  if(boss.state==='RECOVERY' || boss.state==='TELEGRAPH' && false){
+    const t = clamp(boss.timer/(boss.currentBeat?boss.currentBeat.recovery:600),0,1);
+    const close = Math.sin(t*Math.PI)*0.35;
+    ctx.fillStyle='#05060a';
+    ctx.beginPath(); ctx.rect(-r-4,-r-4,(r+4)*2, (r+4)*close); ctx.fill();
+    ctx.beginPath(); ctx.rect(-r-4, r+4-(r+4)*close, (r+4)*2, (r+4)*close); ctx.fill();
+  }
+
+  // pupil
+  ctx.fillStyle='#0a0714';
+  ctx.beginPath(); ctx.arc(boss.pupilX, boss.pupilY, r*0.36, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.75)';
+  ctx.beginPath(); ctx.arc(boss.pupilX-r*0.1, boss.pupilY-r*0.1, r*0.09, 0, Math.PI*2); ctx.fill();
+
+  ctx.restore();
+
+  // telegraph fx (world space, not eye-local)
+  if(boss.state==='TELEGRAPH' && boss.currentBeat && boss.currentBeat.drawTelegraph){
+    const p = easeOutCubic(clamp(boss.timer/boss.currentBeat.telegraph,0,1));
+    boss.currentBeat.drawTelegraph(ctx, boss, p);
+  }
+
+  // defeat effect
+  if(boss.state==='DEFEATED'){
+    const t = clamp(boss.timer/DEFEAT_MS,0,1);
+    ctx.save();
+    ctx.globalAlpha = 1-t;
+    ctx.translate(boss.x,boss.y);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.shadowBlur=20; ctx.shadowColor='#fff';
+    ctx.beginPath(); ctx.arc(0,0,r*(1+t*0.6),0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+function shadeColor(hex, amt){
+  const num = parseInt(hex.slice(1),16);
+  let r=(num>>16)+amt, g=((num>>8)&0xff)+amt, b=(num&0xff)+amt;
+  r=clamp(r,0,255)|0; g=clamp(g,0,255)|0; b=clamp(b,0,255)|0;
+  return '#'+(1<<24 | r<<16 | g<<8 | b).toString(16).slice(1);
+}
+
+/* ============================================================
+   PLAYER
+============================================================ */
+function updatePlayer(dtReal){
+  const tx = clamp(mouse.x, arena.left+player.r, arena.right-player.r);
+  const ty = clamp(mouse.y, arena.top+player.r, arena.bottom-player.r);
+  player.x = lerp(player.x||tx, tx, 0.32);
+  player.y = lerp(player.y||ty, ty, 0.32);
+
+  trail.push({x:player.x,y:player.y,life:0});
+  if(trail.length>10) trail.shift();
+  trail.forEach(t=>t.life+=dtReal);
+
+  if(player.invuln){
+    player.invulnTimer += dtReal;
+    if(player.invulnTimer>1100) player.invuln=false;
+  }
+
+  if(player.skillActive){
+    player.skillTimer += dtReal;
+    if(player.skillTimer>=SLOWMO_DURATION){
+      player.skillActive=false;
+      player.skillCooldown = SKILL_COOLDOWN;
+    }
+  } else if(player.skillCooldown>0){
+    player.skillCooldown = Math.max(0, player.skillCooldown-dtReal);
+  }
+}
+function tryActivateSkill(){
+  if(player.skillActive || player.skillCooldown>0) return;
+  player.skillActive = true; player.skillTimer=0;
+  spawnParticles(player.x,player.y,'#6fd8ff',18,[1,3.5],[300,500],[1.5,3]);
+}
+function hitPlayer(){
+  if(player.invuln) return;
+  player.lives--; player.invuln=true; player.invulnTimer=0;
+  shake(11,320);
+  flashRed();
+  spawnParticles(player.x,player.y,'#ff4d5e',22,[1,4],[350,600],[1.5,3.5]);
+  if(player.lives<=0){
+    triggerGameOver();
+  }
+}
+function drawPlayer(){
+  for(const t of trail){
+    const a = 1-t.life/260;
+    if(a<=0) continue;
+    ctx.save(); ctx.globalAlpha=a*0.28;
+    ctx.fillStyle='#6fd8ff';
+    ctx.beginPath(); ctx.arc(t.x,t.y,player.r*0.6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.save();
+  if(player.invuln && Math.floor(player.invulnTimer/90)%2===0) ctx.globalAlpha=0.35;
+  ctx.shadowBlur = player.skillActive? 34:20;
+  ctx.shadowColor = player.skillActive? '#bfe9ff':'#6fd8ff';
+  const g = ctx.createRadialGradient(player.x-2,player.y-2,1,player.x,player.y,player.r);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.4,'#bfe9ff'); g.addColorStop(1,'#3f92c9');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+/* ============================================================
+   FX
+============================================================ */
+function flashRed(){
+  const el = document.getElementById('flash');
+  el.style.transition='none'; el.style.opacity='0.55';
+  requestAnimationFrame(()=>{ el.style.transition='opacity .5s'; el.style.opacity='0'; });
+}
+function showPhaseTitle(text){
+  const el = document.getElementById('phase-title');
+  el.textContent = text;
+  el.style.transition='none'; el.style.opacity='0';
+  requestAnimationFrame(()=>{
+    el.style.transition='opacity .5s';
+    el.style.opacity='1';
+    setTimeout(()=>{ el.style.transition='opacity .8s'; el.style.opacity='0'; }, 1000);
+  });
+}
+
+/* ============================================================
+   GAME OVER / RESET
+============================================================ */
+function triggerGameOver(){
+  furthestPhase = Math.max(furthestPhase, boss.phaseIndex+1);
+  document.getElementById('gameover-sub').textContent = 'ไปได้ถึงเฟส '+furthestPhase;
+  appState='gameover'; showScreen('gameover');
+}
+
+function startGame(){
+  buildPhases();
+  bullets=[]; lasers=[]; particles=[]; trail=[];
+  player.lives=3; player.invuln=false; player.invulnTimer=0;
+  player.skillActive=false; player.skillCooldown=0; player.skillTimer=0;
+  player.x = arena.left + (arena.right-arena.left)/2;
+  player.y = arena.bottom - 90;
+  boss.phaseIndex=0; boss.cycle=0; boss.beatIndex=0;
+  boss.homeX = W/2; boss.x=boss.homeX; boss.y=boss.homeY;
+  boss.dashTargetX=null; boss.dashProgress=1;
+  victoryPending = false;
+  buildLifeUI(); buildSegUI();
+  enterTelegraph();
+  appState='playing';
+  showHud();
+}
+
+/* ============================================================
+   HUD
+============================================================ */
+function buildLifeUI(){
+  const el = document.getElementById('lives');
+  el.innerHTML='';
+  for(let i=0;i<3;i++){
+    const d = document.createElement('div');
+    d.className='life';
+    el.appendChild(d);
+  }
+}
+function buildSegUI(){
+  const el = document.getElementById('boss-segs');
+  el.innerHTML='';
+  for(let i=0;i<5;i++){
+    const seg = document.createElement('div');
+    seg.className='boss-seg';
+    const i2 = document.createElement('i');
+    seg.appendChild(i2);
+    el.appendChild(seg);
+  }
+}
+function updateHud(){
+  const lives = document.querySelectorAll('#lives .life');
+  lives.forEach((el,i)=> el.classList.toggle('lost', i>=player.lives));
+
+  const segs = document.querySelectorAll('#boss-segs .boss-seg i');
+  const bp = bossProgress();
+  segs.forEach((el,i)=>{
+    let fill;
+    if(i<bp.phaseIndex) fill=0;
+    else if(i===bp.phaseIndex) fill = 1-bp.phaseFrac;
+    else fill=1;
+    el.style.width = (fill*100)+'%';
+  });
+
+  const skillEl = document.getElementById('skill');
+  const cdFrac = player.skillActive ? 1 : (1-player.skillCooldown/SKILL_COOLDOWN);
+  const deg = 360*(1-cdFrac);
+  document.getElementById('skill-fill').style.background =
+    'conic-gradient(rgba(10,12,20,.88) '+deg+'deg, transparent '+deg+'deg)';
+  skillEl.classList.toggle('ready', !player.skillActive && player.skillCooldown<=0);
+
+  document.getElementById('slowmo-veil').style.opacity = player.skillActive ? '1':'0';
+}
+
+/* ============================================================
+   ARENA / GRID DRAW
+============================================================ */
+function drawArena(){
+  ctx.fillStyle='#05060a';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.strokeStyle='rgba(140,170,255,0.055)';
+  ctx.lineWidth=1;
+  const step=42;
+  ctx.beginPath();
+  for(let x=arena.left; x<=arena.right; x+=step){ ctx.moveTo(x,arena.top); ctx.lineTo(x,arena.bottom); }
+  for(let y=arena.top; y<=arena.bottom; y+=step){ ctx.moveTo(arena.left,y); ctx.lineTo(arena.right,y); }
+  ctx.stroke();
+
+  ctx.strokeStyle='rgba(140,170,255,0.16)';
+  ctx.lineWidth=1.5;
+  ctx.strokeRect(arena.left,arena.top,arena.right-arena.left,arena.bottom-arena.top);
+  ctx.restore();
+}
+
+/* ============================================================
+   MAIN LOOP
+============================================================ */
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!lastTime) lastTime=ts;
+  let dtReal = ts-lastTime;
+  lastTime = ts;
+  dtReal = Math.min(dtReal, 34);
+
+  const timeScale = (appState==='playing' && player.skillActive) ? SLOWMO_SCALE : 1;
+  const dtS = dtReal*timeScale;
+
+  if(appState==='playing'){
+    updatePlayer(dtReal);
+    updateBoss(dtS);
+    updateBullets(dtS);
+    updateLasers(dtS);
+    updateParticles(dtS);
+    updateHud();
+  } else if(appState!=='menu' && appState!=='howto'){
+    updateParticles(dtReal*0.6);
+  }
+
+  if(shakeTime>0){ shakeTime = Math.max(0, shakeTime-dtReal); }
+
+  render();
+}
+
+function render(){
+  ctx.save();
+  if(shakeTime>0){
+    const k = shakeTime/Math.max(shakeTotal,1);
+    const mag = shakeMag*k;
+    ctx.translate(rand(-mag,mag), rand(-mag,mag));
+  }
+  drawArena();
+  drawParticles();
+  if(appState==='playing' || appState==='paused'){
+    drawBullets();
+    drawLasers();
+    drawBoss();
+    drawPlayer();
+  }
+  ctx.restore();
+
+  if(vignetteGrad){ ctx.fillStyle=vignetteGrad; ctx.fillRect(0,0,W,H); }
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+resize();
+boss.x = W/2; boss.y = boss.homeY;
+player.x = W/2; player.y = H*0.75;
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
