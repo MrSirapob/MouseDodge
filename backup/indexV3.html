@@ -541,7 +541,6 @@
       let vignetteGrad = null;
       let gridOffsetX = 0;
       let gridOffsetY = 0;
-      let arenaGridColor = "#8f7bff";
 
       function resize() {
         W = window.innerWidth; H = window.innerHeight;
@@ -634,7 +633,6 @@
       let lastTime = 0;
       let deathTimer = 0;
       let deathFade = 0;
-      
 
       const DEATH_DURATION = 1600;
 
@@ -1390,11 +1388,6 @@
 
       function updateBoss(dtS) {
         boss.bob += dtS * 0.0022;
-        arenaGridColor = lerpColor(
-          arenaGridColor,
-          boss.eyeColor,
-          0.08
-        );
         boss.homeY = 120;
         let targetX = boss.homeX;
         if (boss.dashTargetX !== null && boss.dashProgress < 1) {
@@ -1544,32 +1537,11 @@
           ctx.restore();
         }
       }
-
       function shadeColor(hex, amt) {
         const num = parseInt(hex.slice(1), 16);
         let r = (num >> 16) + amt, g = ((num >> 8) & 0xff) + amt, b = (num & 0xff) + amt;
         r = clamp(r, 0, 255) | 0; g = clamp(g, 0, 255) | 0; b = clamp(b, 0, 255) | 0;
         return '#' + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
-      }
-
-      function lerpColor(a, b, t) {
-
-        const ar = parseInt(a.substr(1, 2), 16);
-        const ag = parseInt(a.substr(3, 2), 16);
-        const ab = parseInt(a.substr(5, 2), 16);
-
-        const br = parseInt(b.substr(1, 2), 16);
-        const bg = parseInt(b.substr(3, 2), 16);
-        const bb = parseInt(b.substr(5, 2), 16);
-
-        const rr = Math.round(lerp(ar, br, t));
-        const rg = Math.round(lerp(ag, bg, t));
-        const rb = Math.round(lerp(ab, bb, t));
-
-        return "#" +
-          rr.toString(16).padStart(2, "0") +
-          rg.toString(16).padStart(2, "0") +
-          rb.toString(16).padStart(2, "0");
       }
 
       /* ============================================================
@@ -1904,13 +1876,7 @@
 
         ctx.save();
 
-        ctx.strokeStyle = arenaGridColor;
-        ctx.globalAlpha = 0.15;
-
-        // เพิ่ม 2 บรรทัดนี้
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = arenaGridColor;
-
+        ctx.strokeStyle = 'rgba(140,170,255,0.055)';
         ctx.lineWidth = 1;
 
         const step = 42;
@@ -1933,10 +1899,6 @@
         }
 
         ctx.stroke();
-
-        // รีเซ็ตค่า
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
 
         ctx.restore();
       }
