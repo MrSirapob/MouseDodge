@@ -669,7 +669,9 @@
         state: 'TELEGRAPH', timer: 0, currentBeat: null,
         eyeColor: '#8f7bff', eyeGlow: '#8f7bff',
         dashTargetX: null, dashFrom: 0, dashProgress: 1,
-        pupilX: 0, pupilY: 0
+        pupilX: 0, pupilY: 0,
+
+        introDone: false
       };
 
       /* ============================================================
@@ -1362,6 +1364,15 @@
         }
 
         boss.timer += dtS;
+        // ===== INTRO =====
+        if (boss.state === "INTRO") {
+          if (boss.timer >= 3000) {
+            enterTelegraph();
+            appState = "playing";
+          }
+          return;
+        }
+
         switch (boss.state) {
           case 'TELEGRAPH':
             if (boss.timer >= boss.currentBeat.telegraph) enterAttack();
@@ -1396,13 +1407,41 @@
       function drawBoss() {
         const r = boss.r;
         ctx.save();
-        ctx.translate(boss.x, boss.y);
+        let drawX = boss.x;
+        let drawY = boss.y;
+        let alpha = 1;
+
+        if (boss.state === "INTRO") {
+
+          const p = easeOutCubic(
+            clamp(boss.timer / 1200, 0, 1)
+          );
+
+          drawY = boss.y - 80 + (80 * p);
+          alpha = p;
+        }
+
+        ctx.translate(drawX, drawY);
+        ctx.globalAlpha = alpha;
+
+        // ===== INTRO EFFECT =====
+        let introScale = 1;
+        let introAlpha = 1;
+
+        if (boss.state === "INTRO") {
+
+          const p = clamp(boss.timer / 1000, 0, 1);
+
+          introScale = 0.15 + easeOutCubic(p) * 0.85;
+          introAlpha = p;
+        }
 
         // outer glow ring
         ctx.save();
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.5 * alpha;
         ctx.strokeStyle = boss.eyeColor; ctx.lineWidth = 2;
-        ctx.shadowBlur = 30; ctx.shadowColor = boss.eyeColor;
+        ctx.shadowBlur = 30 * alpha;
+        ctx.shadowColor = boss.eyeColor;
         ctx.beginPath(); ctx.arc(0, 0, r + 10, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
 
@@ -1464,7 +1503,24 @@
         player.x = lerp(player.x || tx, tx, 0.32);
         player.y = lerp(player.y || ty, ty, 0.32);
 
-        trail.push({ x: player.x, y: player.y, life: 0 });
+        if (appState === "playing") {
+
+          trail.push({
+            x: player.x,
+            y: player.y,
+            life: 0
+          });
+
+          if (trail.length > 10) {
+            trail.shift();
+          }
+
+          trail.forEach(t => {
+            t.life += dtReal;
+          });
+
+        }
+
         if (trail.length > 10) trail.shift();
         trail.forEach(t => t.life += dtReal);
 
@@ -1473,16 +1529,23 @@
           if (player.invulnTimer > 1100) player.invuln = false;
         }
 
-        if (player.skillActive) {
-          player.skillTimer += dtReal;
-          if (player.skillTimer >= SLOWMO_DURATION) {
-            player.skillActive = false;
-            player.skillCooldown = SKILL_COOLDOWN;
+        if (appState === "playing") {
+          if (player.skillActive) {
+            player.skillTimer += dtReal;
+            if (player.skillTimer >= SLOWMO_DURATION) {
+              player.skillActive = false;
+              player.skillCooldown = SKILL_COOLDOWN;
+            }
+          } else if (player.skillCooldown > 0) {
+
+            player.skillCooldown = Math.max(
+              0,
+              player.skillCooldown - dtReal
+            );
           }
-        } else if (player.skillCooldown > 0) {
-          player.skillCooldown = Math.max(0, player.skillCooldown - dtReal);
         }
       }
+      
       function tryActivateSkill() {
         if (player.skillActive || player.skillCooldown > 0) return;
         player.skillActive = true; player.skillTimer = 0;
@@ -1595,9 +1658,12 @@
         boss.homeX = W / 2; boss.x = boss.homeX; boss.y = boss.homeY;
         boss.dashTargetX = null; boss.dashProgress = 1;
         victoryPending = false;
-        buildLifeUI(); buildSegUI();
-        enterTelegraph();
-        appState = 'playing';
+        buildLifeUI();
+        buildSegUI();
+        boss.state = "INTRO";
+        boss.timer = 0;
+        boss.introDone = false;
+        appState = "intro";
         showHud();
       }
 
@@ -1710,13 +1776,19 @@
         const timeScale = (appState === 'playing' && player.skillActive) ? SLOWMO_SCALE : 1;
         const dtS = dtReal * timeScale;
 
-        if (appState === 'playing') {
+        if (appState === 'playing' || appState === 'intro') {
+
           updatePlayer(dtReal);
           updateBoss(dtS);
-          updateBullets(dtS);
-          updateLasers(dtS);
+
+          if (appState === 'playing') {
+            updateBullets(dtS);
+            updateLasers(dtS);
+          }
+
           updateParticles(dtS);
           updateHud();
+
         } else if (appState !== 'menu' && appState !== 'howto') {
           updateParticles(dtReal * 0.6);
         }
@@ -1735,7 +1807,11 @@
         }
         drawArena();
         drawParticles();
-        if (appState === 'playing' || appState === 'paused') {
+        if (
+          appState === 'playing' ||
+          appState === 'paused' ||
+          appState === 'intro'
+        ) {
           drawBullets();
           drawLasers();
           drawBoss();
