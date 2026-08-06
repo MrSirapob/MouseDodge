@@ -423,6 +423,11 @@
       .subtitle {
         font-size: 12px;
       }
+
+      #boss-seg,
+      .boss-seg {
+        width: 38px;
+      }
     }
   </style>
 </head>
@@ -563,6 +568,7 @@
       ============================================================ */
       const SCREENS = ['menu', 'howto', 'pause', 'gameover', 'victory'];
       let appState = 'menu'; // menu | howto | playing | paused | gameover | victory
+      let prevPlayState = 'menu';
 
       function showScreen(id) {
         SCREENS.forEach(s => {
@@ -618,7 +624,7 @@
       document.getElementById('btn-victory-again').onclick = () => startGame();
       document.getElementById('btn-victory-menu').onclick = () => { appState = 'menu'; showScreen('menu'); };
 
-      function pauseGame() { appState = 'paused'; showScreen('pause'); }
+      function pauseGame() { prevPlayState = 'playing'; appState = 'paused'; showScreen('pause'); }
       function resumeGame() { appState = 'playing'; showHud(); }
 
       /* ============================================================
@@ -680,17 +686,11 @@
         "ลุกขึ้นมาอีกสิ"
       ];
 
-      /* ---- DEV / DEBUG (แก้ค่าตรงนี้เพื่อ debug ได้เลย) ---- */
-      const DEV_GODMODE = false; // true = ผู้เล่นอมตะ ไม่โดนหิตแพ้เกม
-
-      /* ---- TUNING ---- */
       const SLOWMO_SCALE = 0.32;
       const SLOWMO_DURATION = 1200;
       const SKILL_COOLDOWN = 10000;
       const GRAZE_RADIUS = 24;
       const GRAZE_REFUND = 150;
-      const PHASE_TRANSITION_MS = 2100;
-      const DEFEAT_MS = 2000;
 
       const player = {
         x: 0, y: 0, r: 9, hitR: 4,
@@ -908,7 +908,7 @@
       function fireRing(bs, count, speed, rotOffset) {
         const bulletCount = Math.round(count * arenaDifficulty());
         for (let i = 0; i < bulletCount; i++) {
-          const a = rotOffset + (Math.PI * 2 / bulletCount) * i;
+          const a = off + rotOffset + (Math.PI * 2 / bulletCount) * i;
           spawnBullet({ x: bs.x, y: bs.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: 6, color: '#ff8a6a', glow: '#ff8a6a' });
         }
       }
@@ -1318,6 +1318,8 @@
       /* ============================================================
          BOSS SCHEDULER
       ============================================================ */
+      const PHASE_TRANSITION_MS = 2100;
+      const DEFEAT_MS = 2000;
       let victoryPending = false;
 
       function eyeColorFor(kind) {
@@ -1512,6 +1514,15 @@
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
 
+        // recovery eyelids กระพริบตาแปลกๆ
+        // if (boss.state === 'RECOVERY' || boss.state === 'TELEGRAPH' && false) {
+        //   const t = clamp(boss.timer / (boss.currentBeat ? boss.currentBeat.recovery : 600), 0, 1);
+        //   const close = Math.sin(t * Math.PI) * 0.35;
+        //   ctx.fillStyle = '#05060a';
+        //   ctx.beginPath(); ctx.rect(-r - 4, -r - 4, (r + 4) * 2, (r + 4) * close); ctx.fill();
+        //   ctx.beginPath(); ctx.rect(-r - 4, r + 4 - (r + 4) * close, (r + 4) * 2, (r + 4) * close); ctx.fill();
+        // }
+
         // pupil
         ctx.fillStyle = '#0a0714';
         ctx.beginPath(); ctx.arc(boss.pupilX, boss.pupilY, r * 0.36, 0, Math.PI * 2); ctx.fill();
@@ -1571,6 +1582,9 @@
 
         }
 
+        if (trail.length > 10) trail.shift();
+        trail.forEach(t => t.life += dtReal);
+
         if (player.invuln) {
           player.invulnTimer += dtReal;
           if (player.invulnTimer > 1100) player.invuln = false;
@@ -1600,7 +1614,7 @@
       }
 
       function hitPlayer() {
-        if (DEV_GODMODE) return;
+        //return; // ใส่ return เพื่อเปิด God mode.
 
         if (player.invuln) return;
 
