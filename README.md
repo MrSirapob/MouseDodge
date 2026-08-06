@@ -4,6 +4,15 @@
 > ทดลองระบบการเล่น (Gameplay Prototype) ของ Boss Fight
 
 ---
+## Play Online
+
+สามารถทดลองเล่นเวอร์ชันปัจจุบันได้ที่
+
+**🌐 https://mousedodge.sirapob.my.id/**
+
+> เวอร์ชันนี้เป็น **Vertical Slice Prototype** สำหรับทดสอบระบบ Boss Fight และ Gameplay เท่านั้น ไม่ใช่ตัวเกมเต็ม
+
+---
 
 ## Overview
 
