@@ -233,29 +233,34 @@
       margin-bottom: 7px;
     }
 
-    #boss-segs {
-      display: flex;
-      gap: 5px;
-    }
+    #boss-bar {
+      width: 420px;
+      height: 8px;
 
-    .boss-seg {
-      width: 56px;
-      height: 5px;
       background: rgba(255, 255, 255, .08);
-      position: relative;
+
+      border-radius: 999px;
+
       overflow: hidden;
-      border-radius: 1px;
+
+      box-shadow:
+        inset 0 0 8px rgba(255, 255, 255, .05);
     }
 
-    .boss-seg i {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, var(--accent2), var(--accent));
+    #boss-bar-fill {
       width: 100%;
+      height: 100%;
+
+      background: linear-gradient(90deg,
+          #9b8cff,
+          #6fd8ff);
+
       transform-origin: left;
-      box-shadow: 0 0 8px rgba(111, 216, 255, .6);
+
+      box-shadow:
+        0 0 18px rgba(111, 216, 255, .45);
+
+      transition: width .18s linear;
     }
 
     #lives {
@@ -472,7 +477,7 @@
 
   <!-- GAME OVER -->
   <div class="screen" id="screen-gameover">
-    <div class="eyebrow">พลาดท่า</div>
+    <div class="eyebrow">Boss ฝากข้อความถึงคุณ</div>
     <div id="gameover-quote" class="result-sub" style="
         font-size:30px;
         font-weight:700;
@@ -504,7 +509,10 @@
   <div id="hud">
     <div id="boss-bar-wrap">
       <div id="boss-name">EYE OF THE HOLLOW</div>
-      <div id="boss-segs"></div>
+
+      <div id="boss-bar">
+        <div id="boss-bar-fill"></div>
+      </div>
     </div>
     <div id="lives"></div>
 
@@ -1602,7 +1610,7 @@
       }
 
       function hitPlayer() {
-        return; // ใส่ return เพื่อเปิด God mode.
+        //return; // ใส่ return เพื่อเปิด God mode.
 
         if (player.invuln) return;
 
@@ -1737,7 +1745,6 @@
         boss.dashTargetX = null; boss.dashProgress = 1;
         victoryPending = false;
         buildLifeUI();
-        buildSegUI();
         boss.state = "INTRO";
         boss.timer = 0;
         boss.introDone = false;
@@ -1776,18 +1783,14 @@
         const lives = document.querySelectorAll('#lives .life');
         lives.forEach((el, i) => el.classList.toggle('lost', i >= player.lives));
 
-        const segs = document.querySelectorAll('#boss-segs .boss-seg i');
+        const hp = document.getElementById("boss-bar-fill");
+
         const bp = bossProgress();
 
-        segs.forEach((el, i) => {
-          let fill;
+        const total =
+          1 - ((bp.phaseIndex + bp.phaseFrac) / PHASES.length);
 
-          if (i < bp.phaseIndex) fill = 0;
-          else if (i === bp.phaseIndex) fill = 1 - bp.phaseFrac;
-          else fill = 1;
-
-          el.style.width = (fill * 100) + '%';
-        });
+        hp.style.width = (total * 100) + "%";
 
         // ===== Skill HUD =====
         const cdFrac = player.skillActive
