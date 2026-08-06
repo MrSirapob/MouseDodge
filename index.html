@@ -246,59 +246,54 @@
     }
 
     .life {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #bfe9ff, #5aa9d6 60%, #1c4a63);
-      box-shadow: 0 0 9px rgba(111, 216, 255, .8);
+      font-size: 20px;
+      line-height: 20px;
       transition: .25s;
     }
 
     .life.lost {
-      background: rgba(255, 255, 255, .06);
-      box-shadow: none;
+      opacity: .2;
+      filter: grayscale(1);
     }
 
     #skill {
       position: absolute;
       bottom: 20px;
       right: 32px;
-      width: 56px;
-      height: 56px;
+      width: 180px;
       pointer-events: none;
     }
 
-    #skill-ring {
+    #skill-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    #skill-bar {
       width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, .22);
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 10px;
+      background: rgba(255, 255, 255, .15);
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 999px;
       overflow: hidden;
     }
 
     #skill-fill {
-      position: absolute;
-      inset: 0;
-      background: conic-gradient(rgba(10, 12, 20, .88) 0deg, rgba(10, 12, 20, .88) 0deg, transparent 0deg);
+      width: 100%;
+      height: 100%;
+      background: #46c8ff;
+      transition: width .08s linear, background .2s;
+      box-shadow: 0 0 10px rgba(70, 200, 255, .6);
     }
 
-    #skill-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-      z-index: 2;
+    #skill-text {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #fff;
     }
 
-    #skill.ready #skill-dot {
-      background: #fff;
-      box-shadow: 0 0 14px var(--accent), 0 0 26px var(--accent);
-    }
 
     #pause-btn {
       position: absolute;
@@ -442,12 +437,17 @@
       <div id="boss-segs"></div>
     </div>
     <div id="lives"></div>
+
     <div id="skill">
-      <div id="skill-ring">
+      <div id="skill-label">SLOW MOTION</div>
+
+      <div id="skill-bar">
         <div id="skill-fill"></div>
-        <div id="skill-dot"></div>
       </div>
+
+      <div id="skill-text">READY</div>
     </div>
+
     <svg id="pause-btn" viewBox="0 0 24 24" fill="none">
       <rect x="6" y="4" width="4" height="16" rx="1" fill="white" />
       <rect x="14" y="4" width="4" height="16" rx="1" fill="white" />
@@ -1471,12 +1471,15 @@
       function buildLifeUI() {
         const el = document.getElementById('lives');
         el.innerHTML = '';
+
         for (let i = 0; i < 3; i++) {
           const d = document.createElement('div');
           d.className = 'life';
+          d.innerHTML = '❤️';
           el.appendChild(d);
         }
       }
+
       function buildSegUI() {
         const el = document.getElementById('boss-segs');
         el.innerHTML = '';
@@ -1488,28 +1491,52 @@
           el.appendChild(seg);
         }
       }
+
       function updateHud() {
         const lives = document.querySelectorAll('#lives .life');
         lives.forEach((el, i) => el.classList.toggle('lost', i >= player.lives));
 
         const segs = document.querySelectorAll('#boss-segs .boss-seg i');
         const bp = bossProgress();
+
         segs.forEach((el, i) => {
           let fill;
+
           if (i < bp.phaseIndex) fill = 0;
           else if (i === bp.phaseIndex) fill = 1 - bp.phaseFrac;
           else fill = 1;
+
           el.style.width = (fill * 100) + '%';
         });
 
-        const skillEl = document.getElementById('skill');
-        const cdFrac = player.skillActive ? 1 : (1 - player.skillCooldown / SKILL_COOLDOWN);
-        const deg = 360 * (1 - cdFrac);
-        document.getElementById('skill-fill').style.background =
-          'conic-gradient(rgba(10,12,20,.88) ' + deg + 'deg, transparent ' + deg + 'deg)';
-        skillEl.classList.toggle('ready', !player.skillActive && player.skillCooldown <= 0);
+        // ===== Skill HUD =====
+        const cdFrac = player.skillActive
+          ? 1
+          : (1 - player.skillCooldown / SKILL_COOLDOWN);
 
-        document.getElementById('slowmo-veil').style.opacity = player.skillActive ? '1' : '0';
+        const fill = document.getElementById("skill-fill");
+        const text = document.getElementById("skill-text");
+
+        fill.style.width = (cdFrac * 100) + "%";
+
+        if (player.skillCooldown <= 0) {
+          fill.style.background = "#4cff88";
+          text.textContent = "READY";
+        } else {
+
+          if (cdFrac < 0.3) {
+            fill.style.background = "#ff5c5c";      // แดง
+          } else if (cdFrac < 0.7) {
+            fill.style.background = "#ffcf40";      // เหลือง
+          } else {
+            fill.style.background = "#4cff88";      // เขียว
+          }
+
+          text.textContent = (player.skillCooldown / 1000).toFixed(1) + "s";
+        }
+
+        document.getElementById('slowmo-veil').style.opacity =
+          player.skillActive ? '1' : '0';
       }
 
       /* ============================================================
