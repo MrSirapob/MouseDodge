@@ -410,8 +410,15 @@
   <!-- GAME OVER -->
   <div class="screen" id="screen-gameover">
     <div class="eyebrow">พลาดท่า</div>
-    <h1 class="logo" style="font-size:44px;color:#ffb9c0;text-shadow:0 0 40px rgba(255,77,94,.5);">พ่ายแพ้</h1>
-    <h1 class="logo" style="font-size:44px;color:#ffb9c0;text-shadow:0 0 40px rgba(255,77,94,.5);">ง่ายเกิน GGEZ</h1>
+    <div id="gameover-quote" class="result-sub" style="
+        font-size:30px;
+        font-weight:700;
+        color:#fff;
+        margin-top:-6px;
+        margin-bottom:12px;
+        text-shadow:0 0 18px rgba(255,255,255,.15);
+    ">
+    </div>
     <div class="result-sub" id="gameover-sub">ไปได้ถึงเฟส 1</div>
     <div class="btn-col">
       <button class="btn danger" id="btn-retry">ลองอีกครั้ง</button>
@@ -555,6 +562,50 @@
       let shakeMag = 0, shakeTime = 0, shakeTotal = 0;
       let furthestPhase = 1;
       let lastTime = 0;
+
+      const GAMEOVER_QUOTES = [
+        "คิดว่าจะรอดเหรอ?",
+        "อีกทีสิ 🙂",
+        "แค่นี้เอง?",
+        "ยังไม่ใช่...",
+        "บอสยังอุ่นเครื่องอยู่เลย",
+        "พลาดนิดเดียวเอง...มั้ง",
+        "จะยอมแล้วเหรอ?",
+        "ยังไม่ถึงเวลาชนะ",
+        "เกือบแล้ว...จริง ๆ นะ",
+        "เอาใหม่ ฉันรออยู่",
+
+        "อ้าว... จบไวไปนะ 😏",
+        "เมื่อกี้ตั้งใจใช่ไหม?",
+        "นี่แค่เรียกน้ำย่อยเอง",
+        "บอสยังไม่ทันกระพริบตาเลย",
+        "อย่าเพิ่งกลับบ้านสิ 🤭",
+        "เกือบทำให้ฉันตกใจแล้วนะ",
+        "ยังไม่คันมือเลย",
+        "อืม... เอาใหม่ดีกว่า",
+        "ขอรอบที่จริงจังกว่านี้หน่อย",
+        "เมื่อกี้ถือว่าอบอุ่นร่างกาย",
+        "นายทำได้ดีกว่านี้นะ 🙂",
+        "ฉันเชื่อว่านายจะกด 'ลองอีกครั้ง'",
+        "แค่นี้ยังไม่พอให้ฉันแพ้หรอก",
+        "อ๊ะ... โดนอีกแล้ว",
+        "ใจเย็น ๆ แล้วลองใหม่",
+        "รอบหน้าขอให้ได้นานกว่านี้นะ",
+        "กระสุนยังเหลืออีกเพียบ",
+        "ข้ายังรอเจ้าอยู่...",
+        "คิดให้เร็วกว่านี้อีกนิด",
+        "ฝีเท้ายังไม่ทันสายตาฉันเลย",
+        "ไม่เป็นไร... ฉันรอได้ 😌",
+        "ฮึ... น่าสนุกขึ้นแล้ว",
+        "อย่าทำให้ฉันผิดหวังสิ",
+        "แสดงฝีมือให้ดูอีกหน่อย",
+        "นี่เหรอ... ผู้ท้าชิง?",
+        "ยังมีแรงกด 'ลองอีกครั้ง' ใช่ไหม?",
+        "ฉันยังไม่เบื่อหรอก",
+        "คราวนี้คงไม่พลาด... ใช่ไหม?",
+        "ครั้งนี้ฉันชนะ 😏",
+        "ลุกขึ้นมาอีกสิ"
+      ];
 
       const SLOWMO_SCALE = 0.32;
       const SLOWMO_DURATION = 1200;
@@ -1444,8 +1495,13 @@
       ============================================================ */
       function triggerGameOver() {
         furthestPhase = Math.max(furthestPhase, boss.phaseIndex + 1);
-        document.getElementById('gameover-sub').textContent = 'ไปได้ถึงเฟส ' + furthestPhase;
-        appState = 'gameover'; showScreen('gameover');
+        const quote =
+          GAMEOVER_QUOTES[Math.floor(Math.random() * GAMEOVER_QUOTES.length)];
+        document.getElementById("gameover-quote").textContent = quote;
+        document.getElementById("gameover-sub").textContent =
+          "ไปได้ถึงเฟส " + furthestPhase;
+        appState = "gameover";
+        showScreen("gameover");
       }
 
       function startGame() {
