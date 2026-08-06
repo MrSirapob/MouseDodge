@@ -204,6 +204,27 @@
       align-items: center;
     }
 
+    #boss-bar-wrap.phase-up {
+      animation: phaseGlow .8s ease;
+    }
+
+    @keyframes phaseGlow {
+      0% {
+        transform: translateX(-50%) scale(1);
+        filter: brightness(1);
+      }
+
+      40% {
+        transform: translateX(-50%) scale(1.08);
+        filter: brightness(2);
+      }
+
+      100% {
+        transform: translateX(-50%) scale(1);
+        filter: brightness(1);
+      }
+    }
+
     #boss-name {
       font-family: 'Chakra Petch', sans-serif;
       font-size: 11px;
@@ -1299,6 +1320,12 @@
         boss.eyeColor = '#ffffff';
         shake(12, 480);
         showPhaseTitle('เฟส ' + (boss.phaseIndex + 2));
+
+        const bossBar = document.getElementById("boss-bar-wrap");
+        bossBar.classList.add("phase-up");
+        setTimeout(() => {
+          bossBar.classList.remove("phase-up");
+        }, 800);
       }
       function startDefeat() {
         boss.state = 'DEFEATED'; boss.timer = 0;
