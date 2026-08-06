@@ -1414,14 +1414,14 @@
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
 
-        // recovery eyelids
-        if (boss.state === 'RECOVERY' || boss.state === 'TELEGRAPH' && false) {
-          const t = clamp(boss.timer / (boss.currentBeat ? boss.currentBeat.recovery : 600), 0, 1);
-          const close = Math.sin(t * Math.PI) * 0.35;
-          ctx.fillStyle = '#05060a';
-          ctx.beginPath(); ctx.rect(-r - 4, -r - 4, (r + 4) * 2, (r + 4) * close); ctx.fill();
-          ctx.beginPath(); ctx.rect(-r - 4, r + 4 - (r + 4) * close, (r + 4) * 2, (r + 4) * close); ctx.fill();
-        }
+        // recovery eyelids กระพริบตาแปลกๆ
+        // if (boss.state === 'RECOVERY' || boss.state === 'TELEGRAPH' && false) {
+        //   const t = clamp(boss.timer / (boss.currentBeat ? boss.currentBeat.recovery : 600), 0, 1);
+        //   const close = Math.sin(t * Math.PI) * 0.35;
+        //   ctx.fillStyle = '#05060a';
+        //   ctx.beginPath(); ctx.rect(-r - 4, -r - 4, (r + 4) * 2, (r + 4) * close); ctx.fill();
+        //   ctx.beginPath(); ctx.rect(-r - 4, r + 4 - (r + 4) * close, (r + 4) * 2, (r + 4) * close); ctx.fill();
+        // }
 
         // pupil
         ctx.fillStyle = '#0a0714';
