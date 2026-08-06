@@ -637,6 +637,10 @@
       let shakeMag = 0, shakeTime = 0, shakeTotal = 0;
       let furthestPhase = 1;
       let lastTime = 0;
+      let deathTimer = 0;
+      let deathFade = 0;
+
+      const DEATH_DURATION = 1600;
 
       const GAMEOVER_QUOTES = [
         "คิดว่าจะรอดเหรอ?",
@@ -1647,27 +1651,68 @@
 
         // Game Over
         if (player.lives <= 0) {
-          triggerGameOver();
+          startPlayerDeath();
         }
       }
 
       function drawPlayer() {
-        for (const t of trail) {
-          const a = 1 - t.life / 260;
-          if (a <= 0) continue;
-          ctx.save(); ctx.globalAlpha = a * 0.28;
-          ctx.fillStyle = '#6fd8ff';
-          ctx.beginPath(); ctx.arc(t.x, t.y, player.r * 0.6, 0, Math.PI * 2); ctx.fill();
-          ctx.restore();
+
+        // ----- Trail -----
+        if (appState !== "dying") {
+          for (const t of trail) {
+            const a = 1 - t.life / 260;
+            if (a <= 0) continue;
+
+            ctx.save();
+            ctx.globalAlpha = a * 0.28;
+
+            ctx.fillStyle = "#6fd8ff";
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, player.r * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+          }
         }
+        
+        // ----- Player -----
         ctx.save();
-        if (player.invuln && Math.floor(player.invulnTimer / 90) % 2 === 0) ctx.globalAlpha = 0.35;
+
+        if (appState === "dying") {
+
+          // หายไปภายใน 120ms
+          ctx.globalAlpha = Math.max(0, 1 - deathTimer / 120);
+
+        } else if (
+          player.invuln &&
+          Math.floor(player.invulnTimer / 90) % 2 === 0
+        ) {
+
+          ctx.globalAlpha = 0.35;
+        }
+
         ctx.shadowBlur = player.skillActive ? 34 : 20;
-        ctx.shadowColor = player.skillActive ? '#bfe9ff' : '#6fd8ff';
-        const g = ctx.createRadialGradient(player.x - 2, player.y - 2, 1, player.x, player.y, player.r);
-        g.addColorStop(0, '#ffffff'); g.addColorStop(0.4, '#bfe9ff'); g.addColorStop(1, '#3f92c9');
+        ctx.shadowColor = player.skillActive ? "#bfe9ff" : "#6fd8ff";
+
+        const g = ctx.createRadialGradient(
+          player.x - 2,
+          player.y - 2,
+          1,
+          player.x,
+          player.y,
+          player.r
+        );
+
+        g.addColorStop(0, "#ffffff");
+        g.addColorStop(0.4, "#bfe9ff");
+        g.addColorStop(1, "#3f92c9");
+
         ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
       }
 
@@ -1722,6 +1767,28 @@
       /* ============================================================
          GAME OVER / RESET
       ============================================================ */
+      function startPlayerDeath() {
+
+        appState = "dying";
+        deathTimer = 0;
+        deathFade = 0;
+
+        // เอฟเฟกต์
+        shake(18, 700);
+
+        spawnParticles(
+          player.x,
+          player.y,
+          "#6fd8ff",
+          40,
+          [2, 6],
+          [500, 900],
+          [2, 5]
+        );
+
+        flashRed();
+      }
+
       function triggerGameOver() {
         furthestPhase = Math.max(furthestPhase, boss.phaseIndex + 1);
         const quote =
@@ -1736,7 +1803,11 @@
       function startGame() {
         buildPhases();
         bullets = []; lasers = []; particles = []; trail = [];
-        player.lives = 3; player.invuln = false; player.invulnTimer = 0;
+        player.lives = 3;
+        deathTimer = 0;
+        deathFade = 0;
+        appState = "intro";
+        player.invuln = false; player.invulnTimer = 0;
         player.skillActive = false; player.skillCooldown = 0; player.skillTimer = 0;
         player.x = arena.left + (arena.right - arena.left) / 2;
         player.y = arena.bottom - 90;
@@ -1873,7 +1944,11 @@
         const timeScale = (appState === 'playing' && player.skillActive) ? SLOWMO_SCALE : 1;
         const dtS = dtReal * timeScale;
 
-        if (appState === 'playing' || appState === 'intro') {
+        if (
+          appState === 'playing' ||
+          appState === 'intro' ||
+          appState === 'dying'
+        ) {
 
           updatePlayer(dtReal);
           updateBoss(dtS);
@@ -1885,6 +1960,20 @@
 
           updateParticles(dtS);
           updateHud();
+          if (appState === "dying") {
+
+            deathTimer += dtReal;
+
+            deathFade = clamp(
+              (deathTimer - 800) / 600,
+              0,
+              1
+            );
+
+            if (deathTimer >= DEATH_DURATION) {
+              triggerGameOver();
+            }
+          }
 
         } else if (appState !== 'menu' && appState !== 'howto') {
           updateParticles(dtReal * 0.6);
@@ -1905,9 +1994,10 @@
         drawArena();
         drawParticles();
         if (
-          appState === 'playing' ||
-          appState === 'paused' ||
-          appState === 'intro'
+          appState === "playing" ||
+          appState === "paused" ||
+          appState === "intro" ||
+          appState === "dying"
         ) {
           drawBullets();
           drawLasers();
@@ -1916,7 +2006,18 @@
         }
         ctx.restore();
 
-        if (vignetteGrad) { ctx.fillStyle = vignetteGrad; ctx.fillRect(0, 0, W, H); }
+        if (deathFade > 0) {
+          ctx.save();
+          ctx.globalAlpha = deathFade;
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+
+        if (vignetteGrad) {
+          ctx.fillStyle = vignetteGrad;
+          ctx.fillRect(0, 0, W, H);
+        }
       }
 
       /* ============================================================
