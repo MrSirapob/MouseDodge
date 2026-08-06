@@ -542,8 +542,10 @@
         canvas.width = W * DPR; canvas.height = H * DPR;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        arena.left = 26; arena.right = W - 26;
-        arena.top = 96; arena.bottom = H - 26;
+        arena.left = 0;
+        arena.right = W;
+        arena.top = 0;
+        arena.bottom = H;
         boss.homeX = W / 2;
         vignetteGrad = ctx.createRadialGradient(W / 2, H * 0.55, H * 0.15, W / 2, H * 0.55, H * 0.75);
         vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
@@ -702,6 +704,17 @@
       function dist(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
       function angleTo(x1, y1, x2, y2) { return Math.atan2(y2 - y1, x2 - x1); }
       function rand(a, b) { return a + Math.random() * (b - a); }
+
+      function arenaDifficulty() {
+        const width = arena.right - arena.left;
+
+        // อิงจอ Full HD
+        const scale = width / 1868;
+
+        // จำกัดไว้ระหว่าง 90% - 115%
+        return clamp(scale, 0.9, 1.15);
+      }
+
       function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
       function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 
@@ -879,9 +892,9 @@
         };
       }
       function fireRing(bs, count, speed, rotOffset) {
-        const off = rand(0, Math.PI * 2);
-        for (let i = 0; i < count; i++) {
-          const a = off + rotOffset + (Math.PI * 2 / count) * i;
+        const bulletCount = Math.round(count * arenaDifficulty());
+        for (let i = 0; i < bulletCount; i++) {
+          const a = off + rotOffset + (Math.PI * 2 / bulletCount) * i;
           spawnBullet({ x: bs.x, y: bs.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: 6, color: '#ff8a6a', glow: '#ff8a6a' });
         }
       }
@@ -1323,7 +1336,11 @@
         boss.eyeColor = '#8f7bff';
         if (boss.phaseIndex >= 2) {
           boss.dashFrom = boss.x;
-          boss.dashTargetX = clamp(boss.homeX + rand(-160, 160), arena.left + 120, arena.right - 120);
+          boss.dashTargetX = clamp(
+            boss.homeX + rand(-220, 220),
+            180,
+            W - 180
+          );
           boss.dashProgress = 0;
         }
       }
@@ -1359,7 +1376,7 @@
 
       function updateBoss(dtS) {
         boss.bob += dtS * 0.0022;
-        boss.homeY = arena.top + 92;
+        boss.homeY = 120;
         let targetX = boss.homeX;
         if (boss.dashTargetX !== null && boss.dashProgress < 1) {
           boss.dashProgress = clamp(boss.dashProgress + dtS / 650, 0, 1);
@@ -1808,17 +1825,28 @@
         ctx.fillRect(0, 0, W, H);
 
         ctx.save();
+
         ctx.strokeStyle = 'rgba(140,170,255,0.055)';
         ctx.lineWidth = 1;
+
         const step = 42;
+
         ctx.beginPath();
-        for (let x = arena.left; x <= arena.right; x += step) { ctx.moveTo(x, arena.top); ctx.lineTo(x, arena.bottom); }
-        for (let y = arena.top; y <= arena.bottom; y += step) { ctx.moveTo(arena.left, y); ctx.lineTo(arena.right, y); }
+
+        // Grid แนวตั้ง
+        for (let x = 0; x <= W; x += step) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H);
+        }
+
+        // Grid แนวนอน
+        for (let y = 0; y <= H; y += step) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+        }
+
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(140,170,255,0.16)';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top);
         ctx.restore();
       }
 
