@@ -561,6 +561,8 @@ button.btn.gold:hover {
   min-width: 90px;
   transition: all 0.2s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .boss-skill.on-cooldown {

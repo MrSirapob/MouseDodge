@@ -77,6 +77,21 @@ document.querySelectorAll('.skill-option').forEach(btn => {
   });
 });
 
+for (let i = 1; i <= 5; i++) {
+  const bskill = document.getElementById('bskill-' + i);
+  if (bskill) {
+    bskill.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      triggerBossSkill(i);
+    });
+    bskill.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevent double triggering with mousedown
+      e.stopPropagation();
+      triggerBossSkill(i);
+    }, { passive: false });
+  }
+}
+
 
 document.getElementById('btn-start').onclick = () => { isBossMode = false; startGame(); };
 document.getElementById('btn-bossmode').onclick = () => { isBossMode = true; startBossMode(); };
