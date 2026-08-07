@@ -822,7 +822,18 @@
             if (!b.grazed && d < b.r + GRAZE_RADIUS) {
               b.grazed = true;
               player.skillCooldown = Math.max(0, player.skillCooldown - GRAZE_REFUND);
-              spawnParticles(b.x, b.y, '#bfe9ff', 3, [0.4, 1.2], [220, 380], [1, 2.5]);
+              const fx = (b.x + player.x) * 0.5;
+              const fy = (b.y + player.y) * 0.5;
+
+              spawnParticles(
+                fx,
+                fy,
+                '#bfe9ff',
+                6,
+                [0.8, 2.0],
+                [180, 300],
+                [1.2, 2.8]
+              );
             }
           }
         }
