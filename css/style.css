@@ -442,7 +442,7 @@ button.btn.gold:hover {
     0 0 60px rgba(155, 140, 255, .45);
 }
 
-@media (max-width:640px) {
+@media (max-width:768px), (hover: none) and (pointer: coarse) {
   .logo {
     font-size: 38px;
     letter-spacing: 8px;
@@ -450,6 +450,12 @@ button.btn.gold:hover {
 
   .subtitle {
     font-size: 12px;
+  }
+
+  /* ซ่อนโหมด PvP บนหน้าจอขนาดเล็ก หรืออุปกรณ์สัมผัส (มือถือ/แท็บเล็ต) */
+  #btn-pvp,
+  #btn-howto-pvp {
+    display: none !important;
   }
 }
 
