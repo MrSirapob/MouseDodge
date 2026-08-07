@@ -562,6 +562,7 @@
       const ctx = canvas.getContext('2d');
       let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
       let arena = { left: 0, top: 0, right: 0, bottom: 0 };
+      let touchOffsetY = 0;
       let vignetteGrad = null;
       let gridOffsetX = 0;
       let gridOffsetY = 0;
@@ -569,6 +570,7 @@
 
       function resize() {
         W = window.innerWidth; H = window.innerHeight;
+        touchOffsetY = Math.min(120, H * 0.12);
         canvas.width = W * DPR; canvas.height = H * DPR;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -606,7 +608,7 @@
       const mouse = { x: innerWidth / 2, y: innerHeight * 0.7 };
       canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
       canvas.addEventListener('touchmove', e => {
-        if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }
+        if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY - touchOffsetY; }
         e.preventDefault();
       }, { passive: false });
 
@@ -668,7 +670,7 @@
       let lastTime = 0;
       let deathTimer = 0;
       let deathFade = 0;
-      
+
 
       const DEATH_DURATION = 1600;
 
