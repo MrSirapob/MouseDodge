@@ -94,7 +94,11 @@ function _resetHeroPlayer() {
   player.skillCooldown = 0;  player.skillTimer = 0;
   player.x = arena.left + (arena.right - arena.left) / 2;
   player.y = arena.bottom - 90;
-  document.getElementById('skill-label').textContent =
+  // skill-label มีแค่ใน classic HUD, pvp ใช้ skill-label-pvp แทน
+  const skillLabel = document.getElementById(
+    isModeClassic() ? 'skill-label' : 'skill-label-pvp'
+  );
+  if (skillLabel) skillLabel.textContent =
     player.skillType === 'parry' ? 'PARRY' : 'SLOW MOTION';
 }
 

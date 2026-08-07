@@ -167,12 +167,20 @@ function updateDevHud() {
 
 /* ---- showHud variants ---- */
 function showHudBossAI() {
-  SCREENS.forEach(s => document.getElementById('screen-' + s).classList.remove('active'));
+  SCREENS.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.remove('active');
+  });
   document.getElementById('hud').classList.remove('active');
+  document.getElementById('hud-pvp').classList.remove('active');
   document.getElementById('hud-bossai').classList.add('active');
 }
 function showHudPvp() {
-  SCREENS.forEach(s => document.getElementById('screen-' + s).classList.remove('active'));
+  SCREENS.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.remove('active');
+  });
   document.getElementById('hud').classList.remove('active');
+  document.getElementById('hud-bossai').classList.remove('active');
   document.getElementById('hud-pvp').classList.add('active');
 }

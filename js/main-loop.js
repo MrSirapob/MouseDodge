@@ -96,11 +96,7 @@ function _updatePvp(dtReal) {
   updateParticles(dtReal);
   updateSlashes(dtReal);
   updateHudPvp();
-
-  // Hero ชีวิตหมดใน pvp → Boss ชนะ
-  if (player.lives <= 0) {
-    triggerModeVictory('boss');
-  }
+  // หมายเหตุ: hitPlayer() และ hitBossPlayer() จัดการ triggerModeVictory() โดยตรงแล้ว
 }
 
 /* ============================================================

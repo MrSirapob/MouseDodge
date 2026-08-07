@@ -146,7 +146,11 @@ function updateBoss(dtS) {
     boss.timer += dtS;
     if (boss.timer >= DEFEAT_MS && !victoryPending) {
       victoryPending = true;
-      appState = 'victory'; showScreen('victory');
+      appState = 'victory';
+      showScreen('victory');
+      // คืนค่าข้อความ victory screen กลับเป็น classic
+      const sub = document.querySelector('#screen-victory .result-sub');
+      if (sub) sub.textContent = 'เจ้าเอาชนะบอสตัวแรกได้แล้ว — ชัยชนะนี้เจ้าเป็นผู้ไขว่คว้ามันมาเอง';
     }
     return;
   }

@@ -25,7 +25,7 @@ function resize() {
   arena.right = W;
   arena.top = 0;
   arena.bottom = H;
-  boss.homeX = W / 2;
+  if (typeof boss !== 'undefined') boss.homeX = W / 2;
   vignetteGrad = ctx.createRadialGradient(W / 2, H * 0.55, H * 0.15, W / 2, H * 0.55, H * 0.75);
   vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
   vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
