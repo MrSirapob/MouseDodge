@@ -38,7 +38,6 @@
 
     <div class="btn-col">
       <button class="btn" id="btn-start">เริ่มเกม</button>
-      <button class="btn ghost" id="btn-bossmode">สวมบทบอส (Boss Mode)</button>
       <button class="btn ghost" id="btn-howto">วิธีการเล่น</button>
     </div>
   </div>
@@ -89,7 +88,7 @@
   <div class="screen" id="screen-victory">
     <div class="eyebrow">ผู้รอดชีวิต</div>
     <h1 class="logo" style="font-size:44px;color:#fff3c4;text-shadow:0 0 50px rgba(255,200,90,.55);">ชัยชนะ</h1>
-    <div class="result-sub" id="victory-sub">เจ้าเอาชนะบอสตัวแรกได้แล้ว — ชัยชนะนี้เจ้าเป็นผู้ไขว่คว้ามันมาเอง</div>
+    <div class="result-sub">เจ้าเอาชนะบอสตัวแรกได้แล้ว — ชัยชนะนี้เจ้าเป็นผู้ไขว่คว้ามันมาเอง</div>
     <div class="btn-col">
       <button class="btn gold" id="btn-victory-again">เล่นอีกครั้ง</button>
       <button class="btn ghost" id="btn-victory-menu">กลับเมนูหลัก</button>
@@ -123,45 +122,6 @@
     </svg>
   </div>
 
-  <!-- BOSS MODE HUD -->
-  <div id="bossmode-hud">
-    <div id="bossmode-timer-wrap">
-      <div id="bossmode-timer-label">เวลาที่เหลือ</div>
-      <div id="bossmode-timer">60</div>
-    </div>
-    <div id="bossmode-ai-info">
-      <div id="bossmode-ai-label">AI CHALLENGER</div>
-      <div id="bossmode-ai-lives"></div>
-    </div>
-    <div id="bossmode-skills">
-      <div class="boss-skill" id="bskill-1">
-        <div class="boss-skill-key">Click</div>
-        <div class="boss-skill-name">Burst Ring</div>
-        <div class="boss-skill-cooldown">READY</div>
-      </div>
-      <div class="boss-skill" id="bskill-2">
-        <div class="boss-skill-key">1</div>
-        <div class="boss-skill-name">Volley</div>
-        <div class="boss-skill-cooldown">READY</div>
-      </div>
-      <div class="boss-skill" id="bskill-3">
-        <div class="boss-skill-key">2</div>
-        <div class="boss-skill-name">Spiral</div>
-        <div class="boss-skill-cooldown">READY</div>
-      </div>
-      <div class="boss-skill" id="bskill-4">
-        <div class="boss-skill-key">3</div>
-        <div class="boss-skill-name">Homing</div>
-        <div class="boss-skill-cooldown">READY</div>
-      </div>
-      <div class="boss-skill" id="bskill-5">
-        <div class="boss-skill-key">4</div>
-        <div class="boss-skill-name">Laser</div>
-        <div class="boss-skill-cooldown">READY</div>
-      </div>
-    </div>
-  </div>
-
   <script src="js/setup.js"></script>
   <script src="js/ui-controls.js"></script>
   <script src="js/state.js"></script>
@@ -178,7 +138,6 @@
   <script src="js/game-flow.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/arena.js"></script>
-  <script src="js/boss-mode.js"></script>
   <script src="js/main-loop.js"></script>
   <script src="js/boot.js"></script>
 </body>

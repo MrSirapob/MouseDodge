@@ -37,6 +37,7 @@ function triggerGameOver() {
 }
 
 function startGame() {
+  if (typeof hideBossModeHud !== 'undefined') hideBossModeHud();
   buildPhases();
   bullets = []; lasers = []; particles = []; trail = []; slashes = [];
   player.lives = 3;

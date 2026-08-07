@@ -12,6 +12,13 @@ function frame(ts) {
   gridOffsetX += dtReal * 0.010;
   gridOffsetY += dtReal * 0.006;
 
+  if (appState === 'playing_bossmode') {
+    if (shakeTime > 0) { shakeTime = Math.max(0, shakeTime - dtReal); }
+    updateBossMode(dtReal);
+    renderBossMode();
+    return;
+  }
+
   const timeScale = (appState === 'playing' && player.skillActive && player.skillType === 'slowmo') ? SLOWMO_SCALE : 1;
   const dtS = dtReal * timeScale;
 
