@@ -25,31 +25,19 @@ canvas.addEventListener('touchmove', e => {
   e.preventDefault();
 }, { passive: false });
 
-let selectedSkill = 'parry'; // ค่าเริ่มต้น ผู้เล่นเลือกเปลี่ยนเป็น 'slowmo' ได้จากปุ่มในเมนู
-let isBossMode = false;
-
 window.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
   if (appState === 'playing') tryActivateSkill();
-  else if (appState === 'playing_bossmode') triggerBossSkill(1);
 });
 window.addEventListener('touchstart', e => {
   if (appState === 'playing') tryActivateSkill();
-  else if (appState === 'playing_bossmode') triggerBossSkill(1);
 });
 
 window.addEventListener('keydown', e => {
   if (e.code === 'Space') {
     e.preventDefault();
-    if (appState === 'playing' || appState === 'playing_bossmode') pauseGame();
+    if (appState === 'playing') pauseGame();
     else if (appState === 'paused') resumeGame();
-    return;
-  }
-  if (appState === 'playing_bossmode') {
-    if (e.code === 'Digit1') triggerBossSkill(2);
-    else if (e.code === 'Digit2') triggerBossSkill(3);
-    else if (e.code === 'Digit3') triggerBossSkill(4);
-    else if (e.code === 'Digit4') triggerBossSkill(5);
     return;
   }
   if (e.code === 'Backquote') {
@@ -64,10 +52,11 @@ window.addEventListener('keydown', e => {
 });
 
 document.getElementById('pause-btn').addEventListener('click', () => {
-  if (appState === 'playing' || appState === 'playing_bossmode') pauseGame();
+  if (appState === 'playing') pauseGame();
 });
 
 
+let selectedSkill = 'parry'; // ค่าเริ่มต้น ผู้เล่นเลือกเปลี่ยนเป็น 'slowmo' ได้จากปุ่มในเมนู
 document.querySelectorAll('.skill-option').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.disabled || btn.classList.contains('disabled')) return;
@@ -77,40 +66,16 @@ document.querySelectorAll('.skill-option').forEach(btn => {
   });
 });
 
-for (let i = 1; i <= 5; i++) {
-  const bskill = document.getElementById('bskill-' + i);
-  if (bskill) {
-    bskill.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-      triggerBossSkill(i);
-    });
-    bskill.addEventListener('touchstart', (e) => {
-      e.preventDefault(); // Prevent double triggering with mousedown
-      e.stopPropagation();
-      triggerBossSkill(i);
-    }, { passive: false });
-  }
-}
 
-
-document.getElementById('btn-start').onclick = () => { isBossMode = false; startGame(); };
-document.getElementById('btn-bossmode').onclick = () => { isBossMode = true; startBossMode(); };
+document.getElementById('btn-start').onclick = () => startGame();
 document.getElementById('btn-howto').onclick = () => { appState = 'howto'; showScreen('howto'); };
 document.getElementById('btn-howto-back').onclick = () => { appState = 'menu'; showScreen('menu'); };
 document.getElementById('btn-resume').onclick = () => resumeGame();
-document.getElementById('btn-pause-menu').onclick = () => { isBossMode = false; appState = 'menu'; showScreen('menu'); };
-document.getElementById('btn-retry').onclick = () => { if (isBossMode) startBossMode(); else startGame(); };
-document.getElementById('btn-gameover-menu').onclick = () => { isBossMode = false; appState = 'menu'; showScreen('menu'); };
-document.getElementById('btn-victory-again').onclick = () => { if (isBossMode) startBossMode(); else startGame(); };
-document.getElementById('btn-victory-menu').onclick = () => { isBossMode = false; appState = 'menu'; showScreen('menu'); };
+document.getElementById('btn-pause-menu').onclick = () => { appState = 'menu'; showScreen('menu'); };
+document.getElementById('btn-retry').onclick = () => startGame();
+document.getElementById('btn-gameover-menu').onclick = () => { appState = 'menu'; showScreen('menu'); };
+document.getElementById('btn-victory-again').onclick = () => startGame();
+document.getElementById('btn-victory-menu').onclick = () => { appState = 'menu'; showScreen('menu'); };
 
 function pauseGame() { appState = 'paused'; showScreen('pause'); }
-function resumeGame() {
-  if (isBossMode) {
-    appState = 'playing_bossmode';
-    showBossModeHud();
-  } else {
-    appState = 'playing';
-    showHud();
-  }
-}
+function resumeGame() { appState = 'playing'; showHud(); }

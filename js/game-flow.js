@@ -32,22 +32,11 @@ function triggerGameOver() {
   document.getElementById("gameover-quote").textContent = quote;
   document.getElementById("gameover-sub").textContent =
     "ไปได้ถึงเฟส " + furthestPhase;
-
-  let deathCount = parseInt(localStorage.getItem('mouseDodge_deathCount') || '0', 10);
-  deathCount++;
-  localStorage.setItem('mouseDodge_deathCount', deathCount);
-  
-  const deathCountEl = document.getElementById("gameover-death-count");
-  if (deathCountEl) {
-    deathCountEl.textContent = `จำนวนครั้งที่ตายสะสม: ${deathCount} ครั้ง`;
-  }
-
   appState = "gameover";
   showScreen("gameover");
 }
 
 function startGame() {
-  if (typeof hideBossModeHud !== 'undefined') hideBossModeHud();
   buildPhases();
   bullets = []; lasers = []; particles = []; trail = []; slashes = [];
   player.lives = 3;

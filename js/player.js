@@ -113,11 +113,7 @@ function hitPlayer() {
 
   // Game Over
   if (player.lives <= 0) {
-    if (typeof isBossMode !== 'undefined' && isBossMode) {
-      triggerBossModeVictory();
-    } else {
-      startPlayerDeath();
-    }
+    startPlayerDeath();
   }
 }
 
