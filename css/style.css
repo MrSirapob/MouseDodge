@@ -475,3 +475,25 @@ button.btn.gold:hover {
 #dev-hud.active {
   display: block;
 }
+
+/* ---------- Mode Buttons ---------- */
+button.btn.btn-boss {
+  border-color: rgba(255, 107, 107, .3);
+  color: #ff9b9b;
+}
+button.btn.btn-boss:hover {
+  border-color: #ff6b6b;
+  color: #fff;
+  box-shadow: 0 0 24px rgba(255, 107, 107, .35);
+  background: rgba(255, 107, 107, .07);
+}
+button.btn.btn-pvp {
+  border-color: rgba(195, 157, 255, .3);
+  color: #c39dff;
+}
+button.btn.btn-pvp:hover {
+  border-color: #c39dff;
+  color: #fff;
+  box-shadow: 0 0 24px rgba(195, 157, 255, .35);
+  background: rgba(195, 157, 255, .07);
+}

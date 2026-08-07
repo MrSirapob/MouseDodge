@@ -1,0 +1,227 @@
+/* ============================================================
+   Boss Skill HUD — เพิ่มต่อจาก style.css
+   (ใช้ใน bossAI + pvp mode)
+============================================================ */
+
+/* ---------- HUD Boss AI / PvP ---------- */
+#hud-bossai,
+#hud-pvp {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+}
+#hud-bossai.active,
+#hud-pvp.active {
+  display: block;
+}
+
+/* ---- Boss AI Timer (กลางบน) ---- */
+#bossai-timer {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #4cff88;
+  text-shadow: 0 0 20px rgba(76, 255, 136, .5);
+  transition: color .3s;
+}
+#bossai-timer.urgent {
+  color: #ff4d5e;
+  text-shadow: 0 0 20px rgba(255, 77, 94, .6);
+  animation: timerPulse .5s ease infinite alternate;
+}
+@keyframes timerPulse {
+  from { transform: translateX(-50%) scale(1); }
+  to   { transform: translateX(-50%) scale(1.08); }
+}
+
+/* ---- AI Hero HP (ซ้ายบน) ---- */
+#ai-lives {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#ai-lives-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(111, 216, 255, .55);
+  margin-right: 4px;
+}
+
+/* ---- P1 Hero lives + skill (PvP, ซ้ายล่าง) ---- */
+#pvp-hero-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 28px;
+}
+#pvp-hero-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(111, 216, 255, .55);
+  margin-bottom: 6px;
+}
+#pvp-lives {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ---- Boss HP pips (PvP, ขวาบน) ---- */
+#pvp-boss-panel {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+#pvp-boss-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255, 107, 107, .55);
+}
+#boss-hp-pips {
+  display: flex;
+  gap: 6px;
+}
+.boss-life {
+  font-size: 18px;
+  transition: .25s;
+}
+
+/* ---- Boss Energy Bar (ด้านล่างขวา, ทั้ง bossAI + pvp) ---- */
+#boss-energy-wrap {
+  position: absolute;
+  bottom: 20px;
+  right: 28px;
+  width: 200px;
+}
+#boss-energy-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(195, 157, 255, .6);
+  margin-bottom: 5px;
+  text-align: right;
+}
+#boss-energy-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(195, 157, 255, .25);
+  border-radius: 999px;
+  overflow: hidden;
+}
+#boss-energy-fill {
+  width: 100%;
+  height: 100%;
+  background: #c39dff;
+  border-radius: 999px;
+  transition: width .1s linear, background .3s;
+  box-shadow: 0 0 10px rgba(195, 157, 255, .5);
+}
+
+/* ---- Boss Skill Slots (แนวนอนเหนือ energy bar) ---- */
+#boss-skills {
+  position: absolute;
+  bottom: 52px;
+  right: 28px;
+  display: flex;
+  gap: 8px;
+}
+
+.boss-skill-slot {
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.5;
+  transition: opacity .2s, transform .15s;
+  position: relative;
+}
+.boss-skill-slot.bs-ready {
+  opacity: 1;
+}
+.boss-skill-slot.bs-ready:hover {
+  transform: translateY(-2px);
+}
+.boss-skill-slot.bs-no-energy {
+  opacity: 0.3;
+}
+.boss-skill-slot.bs-gcd {
+  opacity: 0.6;
+}
+
+/* key badge */
+.bs-key {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 3px;
+  padding: 3px 7px;
+  min-width: 24px;
+  text-align: center;
+}
+.boss-skill-slot.bs-ready .bs-key {
+  border-color: rgba(195, 157, 255, .6);
+  box-shadow: 0 0 10px rgba(195, 157, 255, .3);
+  background: rgba(195, 157, 255, .12);
+}
+
+/* skill name */
+.bs-name {
+  font-size: 9px;
+  letter-spacing: .5px;
+  color: var(--muted);
+  text-align: center;
+}
+.boss-skill-slot.bs-ready .bs-name {
+  color: rgba(195, 157, 255, .85);
+}
+
+/* cooldown bar */
+.bs-cd-bar-wrap {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bs-cd-bar {
+  height: 100%;
+  background: #c39dff;
+  border-radius: 999px;
+  transition: width .15s linear;
+}
+
+/* cooldown text */
+.bs-cd-text {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: 'Chakra Petch', monospace;
+  height: 12px;
+  text-align: center;
+}
+
+/* GCD overlay flash */
+.boss-skill-slot.bs-gcd .bs-cd-bar {
+  background: #ffb454;
+}
