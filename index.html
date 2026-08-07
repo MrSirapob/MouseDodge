@@ -424,6 +424,29 @@
         font-size: 12px;
       }
     }
+
+    #dev-hud {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 40;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #4cff88;
+      background: rgba(0, 0, 0, .6);
+      padding: 8px 12px;
+      border: 1px solid rgba(76, 255, 136, .4);
+      border-radius: 4px;
+      pointer-events: none;
+      display: none;
+      white-space: pre;
+      letter-spacing: .5px;
+    }
+
+    #dev-hud.active {
+      display: block;
+    }
   </style>
 </head>
 
@@ -434,6 +457,7 @@
   <div id="slowmo-veil"></div>
   <div id="intro-veil"></div>
   <div id="phase-title"></div>
+  <div id="dev-hud"></div>
 
   <!-- MENU -->
   <div class="screen active" id="screen-menu">
@@ -599,6 +623,16 @@
           e.preventDefault();
           if (appState === 'playing') pauseGame();
           else if (appState === 'paused') resumeGame();
+          return;
+        }
+        if (e.code === 'Backquote') {
+          devMode = !devMode;
+          document.getElementById('dev-hud').classList.toggle('active', devMode);
+          return;
+        }
+        if (devMode && /^Digit[1-9]$/.test(e.code)) {
+          const idx = Number(e.code.slice(5)) - 1;
+          devJumpToPhase(idx);
         }
       });
 
@@ -683,7 +717,8 @@
       ];
 
       /* ---- DEV / DEBUG (แก้ค่าตรงนี้เพื่อ debug ได้เลย) ---- */
-      const DEV_GODMODE = false; // true = ผู้เล่นอมตะ ไม่โดนหิตแพ้เกม
+      const DEV_GODMODE = false; // true = ผู้เล่นอมตะตลอด (ต้องแก้โค้ด) ไม่โดนหิตแพ้เกม
+      let devMode = false; // สลับได้ตอนเล่นจริงด้วยปุ่ม ` (backtick) — เปิดแล้วจะอมตะ + โชว์ debug overlay + กระโดดเฟสได้ด้วยเลข 1-5
 
       /* ---- TUNING ---- */
       const SLOWMO_SCALE = 0.32;
@@ -1359,6 +1394,18 @@
         return beats[nextIndex];
       }
 
+      function devJumpToPhase(idx) {
+        if (!devMode || idx < 0 || idx >= PHASES.length) return;
+        if (appState !== 'playing' && appState !== 'intro') return;
+        bullets = []; lasers = [];
+        boss.phaseIndex = idx; boss.cycle = 0; boss.beatIndex = 0;
+        furthestPhase = Math.max(furthestPhase, idx + 1);
+        setupBossDash(PHASES[idx].beats[0]);
+        boss.state = 'TELEGRAPH'; // กันเคสกระโดดตอนบอสยังอยู่ intro/defeated
+        enterTelegraph();
+        appState = 'playing';
+      }
+
       function setupBossDash(nextBeat) {
         // เรียกก่อนเริ่มท่าใดๆ (ทั้งท่าถัดไปในเฟสเดียวกัน และท่าแรกของเฟสใหม่)
         // แยก 2 เรื่องออกจากกัน:
@@ -1681,7 +1728,7 @@
       }
 
       function hitPlayer() {
-        if (DEV_GODMODE) return;
+        if (DEV_GODMODE || devMode) return;
 
         if (player.invuln) return;
 
@@ -1947,6 +1994,21 @@
 
         document.getElementById('slowmo-veil').style.opacity =
           player.skillActive ? '1' : '0';
+
+        updateDevHud();
+      }
+
+      function updateDevHud() {
+        if (!devMode) return;
+        const el = document.getElementById('dev-hud');
+        el.textContent =
+          'DEV MODE (กด ` ปิด)\n' +
+          'godmode: ON\n' +
+          'phase: ' + (boss.phaseIndex + 1) + ' / ' + PHASES.length + '\n' +
+          'cycle: ' + boss.cycle + ' / ' + (PHASES[boss.phaseIndex] ? PHASES[boss.phaseIndex].cycles : '-') + '\n' +
+          'beat: ' + boss.beatIndex + '  state: ' + boss.state + '\n' +
+          'lives: ' + player.lives + '\n' +
+          '[1-5] กระโดดไปเฟสนั้นทันที';
       }
 
       /* ============================================================
