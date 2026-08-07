@@ -1,0 +1,477 @@
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=LINE+Seed+Sans+TH:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #05060a;
+  --grid: rgba(140, 170, 255, 0.05);
+  --accent: #6fd8ff;
+  --accent2: #9b8cff;
+  --danger: #ff4d5e;
+  --warn: #ffb454;
+  --text: #e7ecf6;
+  --muted: #7a8296;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'LINE Seed Sans TH', sans-serif;
+  height: 100%;
+  width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+  cursor: none;
+}
+
+/* ---------- full screen overlays ---------- */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  z-index: 30;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(18, 20, 32, .88), rgba(3, 4, 8, .98));
+}
+
+.screen.active {
+  display: flex;
+}
+
+.logo {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  font-size: 58px;
+  letter-spacing: 14px;
+  color: #f2f6ff;
+  margin: 0;
+  text-shadow: 0 0 40px rgba(155, 140, 255, .55), 0 0 90px rgba(111, 216, 255, .25);
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.subtitle {
+  color: var(--muted);
+  letter-spacing: 1px;
+  font-size: 14px;
+  margin-top: -14px;
+  font-weight: 300;
+}
+
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+  min-width: 260px;
+}
+
+button.btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, .22);
+  color: var(--text);
+  padding: 15px 20px;
+  font-size: 15px;
+  letter-spacing: 1px;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .22s ease;
+  border-radius: 2px;
+}
+
+button.btn:hover {
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 24px rgba(111, 216, 255, .3);
+  background: rgba(111, 216, 255, .06);
+}
+
+button.btn.ghost {
+  border-color: rgba(255, 255, 255, .1);
+  color: var(--muted);
+  letter-spacing: 1px;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+button.btn.ghost:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow: none;
+  background: rgba(255, 255, 255, .03);
+}
+
+button.btn.danger:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 24px rgba(255, 77, 94, .3);
+}
+
+button.btn.gold:hover {
+  border-color: var(--warn);
+  box-shadow: 0 0 24px rgba(255, 180, 84, .35);
+}
+
+.skill-select {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.skill-option {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.5;
+}
+
+.skill-option.selected {
+  border-color: var(--accent);
+  color: #fff;
+  background: rgba(111, 216, 255, .1);
+  box-shadow: 0 0 20px rgba(111, 216, 255, .25);
+}
+
+.skill-option:disabled,
+.skill-option.disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.skill-option small {
+  font-size: 11px;
+  letter-spacing: .5px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.controls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 6px 0 8px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: .5px;
+}
+
+.key {
+  border: 1px solid rgba(255, 255, 255, .3);
+  padding: 7px 16px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  min-width: 78px;
+  text-align: center;
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.result-sub {
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-top: -10px;
+}
+
+/* ---------- HUD ---------- */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+}
+
+#hud.active {
+  display: block;
+}
+
+#boss-bar-wrap {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  flex-direction: column;
+  align-items: center;
+}
+
+#boss-bar-wrap.phase-up {
+  animation: phaseGlow .8s ease;
+}
+
+@keyframes phaseGlow {
+  0% {
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+
+  40% {
+    transform: translateX(-50%) scale(1.08);
+    filter: brightness(2);
+  }
+
+  100% {
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
+  }
+}
+
+#boss-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: rgba(230, 236, 255, .55);
+  margin-bottom: 7px;
+}
+
+#boss-bar {
+  width: 420px;
+  height: 8px;
+
+  background: rgba(255, 255, 255, .08);
+
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, .05);
+}
+
+#boss-bar-fill {
+  width: 100%;
+  height: 100%;
+
+  background: linear-gradient(90deg,
+      #9b8cff,
+      #6fd8ff);
+
+  transform-origin: left;
+
+  box-shadow:
+    0 0 18px rgba(111, 216, 255, .45);
+
+  transition: width .18s linear;
+}
+
+#lives {
+  position: absolute;
+  bottom: 28px;
+  left: 32px;
+  display: flex;
+  gap: 9px;
+}
+
+.life {
+  font-size: 20px;
+  line-height: 20px;
+  transition: .25s;
+}
+
+.life.hit {
+  animation: lifeHit .35s ease;
+}
+
+@keyframes lifeHit {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(1.6) rotate(-15deg);
+  }
+
+  60% {
+    transform: scale(.8) rotate(10deg);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.life.lost {
+  opacity: .2;
+  filter: grayscale(1);
+}
+
+#skill {
+  position: absolute;
+  bottom: 20px;
+  right: 32px;
+  width: 180px;
+  pointer-events: none;
+}
+
+#skill-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+#skill-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, .15);
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#skill-fill {
+  width: 100%;
+  height: 100%;
+  background: #46c8ff;
+  transition: width .08s linear, background .2s;
+  box-shadow: 0 0 10px rgba(70, 200, 255, .6);
+}
+
+#skill-text {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #fff;
+}
+
+
+#pause-btn {
+  position: absolute;
+  top: 26px;
+  right: 32px;
+  width: 26px;
+  height: 26px;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: .45;
+  transition: .2s;
+}
+
+#pause-btn:hover {
+  opacity: .9;
+}
+
+#flash {
+  position: fixed;
+  inset: 0;
+  background: var(--danger);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+
+#slowmo-veil {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0;
+  transition: opacity .25s;
+  background: radial-gradient(circle at 50% 55%, transparent 38%, rgba(70, 120, 255, .14) 100%);
+  box-shadow: inset 0 0 140px rgba(70, 110, 255, .25);
+}
+
+#intro-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+
+  background: rgba(0, 0, 0, .45);
+
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+#phase-title {
+  position: fixed;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+  pointer-events: none;
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 10px;
+
+  font-size: 58px;
+  font-weight: 700;
+  letter-spacing: 14px;
+
+  color: #fff;
+  opacity: 0;
+  text-align: center;
+
+  text-shadow:
+    0 0 18px rgba(255, 255, 255, .18),
+    0 0 60px rgba(155, 140, 255, .45);
+}
+
+@media (max-width:640px) {
+  .logo {
+    font-size: 38px;
+    letter-spacing: 8px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+}
+
+#dev-hud {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 40;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #4cff88;
+  background: rgba(0, 0, 0, .6);
+  padding: 8px 12px;
+  border: 1px solid rgba(76, 255, 136, .4);
+  border-radius: 4px;
+  pointer-events: none;
+  display: none;
+  white-space: pre;
+  letter-spacing: .5px;
+}
+
+#dev-hud.active {
+  display: block;
+}
