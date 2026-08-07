@@ -701,14 +701,12 @@
       };
 
       const boss = {
-        x: 0, y: 0, homeX: 0, homeY: 120,
-        baseY: 120,
+        x: 0, y: 0, homeX: 0, homeY: 150,
         r: 64, bob: 0,
         phaseIndex: 0, cycle: 0, beatIndex: 0,
         state: 'TELEGRAPH', timer: 0, currentBeat: null,
         eyeColor: '#8f7bff', eyeGlow: '#8f7bff',
         dashTargetX: null, dashFrom: 0, dashProgress: 1,
-        dashTargetY: null, dashFromY: 0,
         pupilX: 0, pupilY: 0,
 
         introDone: false
@@ -974,7 +972,7 @@
         const dir = o.reverse ? -1 : 1;
         return {
           telegraph: o.telegraph || 1300, attackDuration: sweepDuration, recovery: o.recovery || 850,
-          telegraphKind: 'laser', center: true, data: {}, // ท่ากวาดเลเซอร์รอบตัว ต้องยิงจากกลางจอเสมอ
+          telegraphKind: 'laser', data: {},
           prep(bs, pl) {
             const aim = angleTo(bs.x, bs.y, pl.x, pl.y);
             this.data.angleStart = aim - (arcSpan / 2) * dir;
@@ -1067,8 +1065,6 @@
           telegraph: overrides.telegraph !== undefined ? overrides.telegraph : Math.max(...subBeats.map(b => b.telegraph)),
           attackDuration: overrides.attackDuration !== undefined ? overrides.attackDuration : Math.max(...subBeats.map(b => b.attackDuration)),
           recovery: overrides.recovery !== undefined ? overrides.recovery : Math.max(...subBeats.map(b => b.recovery)),
-          // true ถ้าตั้ง override ไว้ตรงๆ หรือถ้ามีท่าย่อยตัวไหนต้องการให้บอสกลับกลางจอ (เช่น beatLaserSweep)
-          center: overrides.center !== undefined ? overrides.center : subBeats.some(b => b.center),
           telegraphKind: 'combo',
           prep(bs, pl) { subBeats.forEach(b => b.prep && b.prep(bs, pl)); },
           onAttackStart(bs, pl) { subBeats.forEach(b => { b._fired = 0; b._rowsFired = 0; b.onAttackStart && b.onAttackStart(bs, pl); }); },
@@ -1349,47 +1345,18 @@
         boss.state = 'ATTACK'; boss.timer = 0;
         boss.currentBeat.onAttackStart && boss.currentBeat.onAttackStart(boss, player);
       }
-      function peekNextBeat() {
-        // เช็คว่าท่าถัดไปคือท่าอะไร ใช้ตัดสินใจว่าบอสต้องกลับไปกลางจอก่อนไหม
-        const beats = PHASES[boss.phaseIndex].beats;
-        let nextIndex = boss.beatIndex + 1;
-        let nextCycle = boss.cycle;
-        if (nextIndex >= beats.length) { nextIndex = 0; nextCycle++; }
-        if (nextCycle >= PHASES[boss.phaseIndex].cycles) return null; // รอบถัดไปคือเปลี่ยนเฟสแล้ว ไม่ต้องกลาง
-        return beats[nextIndex];
-      }
-
-      function setupBossDash(nextBeat) {
-        // เรียกก่อนเริ่มท่าใดๆ (ทั้งท่าถัดไปในเฟสเดียวกัน และท่าแรกของเฟสใหม่)
-        // แยก 2 เรื่องออกจากกัน:
-        //  - centerNeeded: ท่ากวาดเลเซอร์ ต้องย้ายไปกลางจอเสมอ ทุกเฟส (ตั้งแต่เฟส 2 ที่เริ่มมีท่านี้)
-        //  - wanderEnabled: การสุ่มเดินไปมาระหว่างท่า เป็นดีไซน์ความยาก เริ่มเฟส 3 ขึ้นไปเท่านั้น
-        const centerNeeded = !!(nextBeat && nextBeat.center);
-        const wanderEnabled = boss.phaseIndex >= 2;
-        if (!centerNeeded && !wanderEnabled) return; // เฟสต้นๆ ไม่มีท่ากวาดเลเซอร์ ไม่ต้องขยับ
-
-        boss.dashFrom = boss.x;
-        boss.dashFromY = boss.homeY;
-        if (centerNeeded) {
-          // ท่ากวาดเลเซอร์รอบตัว: ย้ายบอสไปกลางจอทั้งแนวนอนและแนวตั้ง
-          boss.dashTargetX = W / 2;
-          boss.dashTargetY = H / 2;
-        } else if (wanderEnabled) {
-          // ท่าปกติ (เฟส 3 ขึ้นไป): สุ่มตำแหน่งแนวนอน แล้วกลับขึ้นไปด้านบน
-          boss.dashTargetX = clamp(boss.homeX + rand(-220, 220), 180, W - 180);
-          boss.dashTargetY = BOSS_TOP_Y;
-        } else {
-          // จบท่ากวาดเลเซอร์ในเฟสที่ยังไม่ปลดล็อก wander (เฟส 2): กลับขึ้นบน ตำแหน่งแนวนอนเดิม
-          boss.dashTargetX = boss.homeX;
-          boss.dashTargetY = BOSS_TOP_Y;
-        }
-        boss.dashProgress = 0;
-      }
-
       function enterRecovery() {
         boss.state = 'RECOVERY'; boss.timer = 0;
         boss.eyeColor = '#8f7bff';
-        setupBossDash(peekNextBeat());
+        if (boss.phaseIndex >= 2) {
+          boss.dashFrom = boss.x;
+          boss.dashTargetX = clamp(
+            boss.homeX + rand(-220, 220),
+            180,
+            W - 180
+          );
+          boss.dashProgress = 0;
+        }
       }
       function advanceBeat() {
         boss.beatIndex++;
@@ -1421,8 +1388,6 @@
         spawnParticles(boss.x, boss.y, '#8f7bff', 50, [0.5, 3], [800, 1400], [2, 5]);
       }
 
-      const BOSS_TOP_Y = 120; // ตำแหน่ง Y ปกติของบอส (มุมบนจอ) ตอนไม่ได้ใช้ท่ากวาดเลเซอร์
-
       function updateBoss(dtS) {
         boss.bob += dtS * 0.0022;
         arenaGridColor = lerpColor(
@@ -1430,22 +1395,17 @@
           boss.eyeColor,
           0.08
         );
+        boss.homeY = 120;
         let targetX = boss.homeX;
-        let targetY = boss.homeY;
         if (boss.dashTargetX !== null && boss.dashProgress < 1) {
           boss.dashProgress = clamp(boss.dashProgress + dtS / 650, 0, 1);
-          const dashT = easeInOutQuad(boss.dashProgress);
-          targetX = lerp(boss.dashFrom, boss.dashTargetX, dashT);
-          targetY = lerp(boss.dashFromY, boss.dashTargetY, dashT);
+          targetX = lerp(boss.dashFrom, boss.dashTargetX, easeInOutQuad(boss.dashProgress));
           boss.homeX = boss.dashTargetX;
-          boss.homeY = boss.dashTargetY;
         } else {
           targetX = boss.homeX;
-          targetY = boss.homeY;
         }
         boss.x = lerp(boss.x || targetX, targetX, 0.12);
-        boss.baseY = lerp(boss.baseY || targetY, targetY, 0.12);
-        boss.y = boss.baseY + Math.sin(boss.bob) * 7;
+        boss.y = boss.homeY + Math.sin(boss.bob) * 7;
 
         const pdx = player.x - boss.x, pdy = player.y - boss.y;
         const plen = Math.hypot(pdx, pdy) || 1;
@@ -1494,7 +1454,6 @@
             if (boss.timer >= PHASE_TRANSITION_MS) {
               boss.phaseIndex++; boss.cycle = 0; boss.beatIndex = 0;
               furthestPhase = Math.max(furthestPhase, boss.phaseIndex + 1);
-              setupBossDash(PHASES[boss.phaseIndex].beats[0]);
               enterTelegraph();
             }
             break;
@@ -1616,23 +1575,11 @@
       /* ============================================================
          PLAYER
       ============================================================ */
-      const PLAYER_FOLLOW_T = 0.32;
-      const PLAYER_MAX_LAG = 46; // px ที่ยอมให้ hitbox ตามหลังเมาส์จริงได้มากสุด (กันบัคตอนสบัดเมาส์ไวๆ แล้ว hitbox ค้างอยู่ไกลจากเมาส์)
-
       function updatePlayer(dtReal) {
         const tx = clamp(mouse.x, arena.left + player.r, arena.right - player.r);
         const ty = clamp(mouse.y, arena.top + player.r, arena.bottom - player.r);
-
-        const curX = player.x || tx, curY = player.y || ty;
-        const lagDist = dist(curX, curY, tx, ty);
-        // ถ้าสบัดเมาส์ไวจนตัวละครตามไม่ทันเกินระยะที่กำหนด ให้เร่งตามให้ทันทันที
-        // ป้องกัน hitbox ล้าหลังตำแหน่งเมาส์จริงจนโดนยิง/รอดแบบไม่สมเหตุสมผล
-        const followT = lagDist > PLAYER_MAX_LAG
-          ? 1 - (PLAYER_MAX_LAG / lagDist) * (1 - PLAYER_FOLLOW_T)
-          : PLAYER_FOLLOW_T;
-
-        player.x = lerp(curX, tx, followT);
-        player.y = lerp(curY, ty, followT);
+        player.x = lerp(player.x || tx, tx, 0.32);
+        player.y = lerp(player.y || ty, ty, 0.32);
 
         if (appState === "playing") {
 
@@ -1873,21 +1820,20 @@
         player.lives = 3;
         deathTimer = 0;
         deathFade = 0;
-        furthestPhase = 1; // รีเซ็ตทุกครั้งที่เริ่มเกมใหม่ ไม่งั้นข้อความ "ไปได้ถึงเฟส" ตอนตายจะค้างค่าจากรอบก่อนหน้า
         appState = "intro";
         player.invuln = false; player.invulnTimer = 0;
         player.skillActive = false; player.skillCooldown = 0; player.skillTimer = 0;
         player.x = arena.left + (arena.right - arena.left) / 2;
         player.y = arena.bottom - 90;
         boss.phaseIndex = 0; boss.cycle = 0; boss.beatIndex = 0;
-        boss.homeX = W / 2; boss.homeY = BOSS_TOP_Y;
-        boss.x = boss.homeX; boss.baseY = boss.homeY; boss.y = boss.homeY;
-        boss.dashTargetX = null; boss.dashTargetY = null; boss.dashProgress = 1;
+        boss.homeX = W / 2; boss.x = boss.homeX; boss.y = boss.homeY;
+        boss.dashTargetX = null; boss.dashProgress = 1;
         victoryPending = false;
         buildLifeUI();
         boss.state = "INTRO";
         boss.timer = 0;
         boss.introDone = false;
+        appState = "intro";
         showHud();
       }
 
@@ -2090,7 +2036,7 @@
          BOOT
       ============================================================ */
       resize();
-      boss.x = W / 2; boss.homeY = BOSS_TOP_Y; boss.baseY = boss.homeY; boss.y = boss.homeY;
+      boss.x = W / 2; boss.y = boss.homeY;
       player.x = W / 2; player.y = H * 0.75;
       requestAnimationFrame(frame);
 
